@@ -43,7 +43,16 @@ const AcademicCouncil = () => {
         setLoading(true);
         const data = await academicCouncilAPI.getPublicList();
         if (!isMounted) return;
-        const mapped: CouncilMember[] = (data || []).map((m: any) => ({
+        
+        // Handle null or empty response
+        if (!data) {
+          console.warn('No data returned from academic council API');
+          setMembers([]);
+          setError(null);
+          return;
+        }
+
+        const mapped: CouncilMember[] = (Array.isArray(data) ? data : []).map((m: any) => ({
           id: m.id,
           name: m.name ?? '',
           designation: m.designation ?? m.position ?? undefined,
@@ -57,7 +66,8 @@ const AcademicCouncil = () => {
       } catch (err) {
         console.error('Failed to load academic council', err);
         if (!isMounted) return;
-        setError('Unable to load academic council at the moment.');
+        setError('Unable to load academic council members at the moment. Please try again later.');
+        setMembers([]);
       } finally {
         if (isMounted) setLoading(false);
       }
