@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Backend API Integration Test</h1>
+    
+    <!-- Login Test -->
+    <div class="test-section">
+        <h2>1. Admin Login</h2>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="admin@example.com">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="password">
+        </div>
+        <button onclick="testLogin()">Login</button>
+        <div id="loginResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- Student CRUD Test -->
+    <div class="test-section">
+        <h2>2. Student CRUD Operations</h2>
+        <div class="form-group">
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" value="John">
+        </div>
+        <div class="form-group">
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" value="Doe">
+        </div>
+        <div class="form-group">
+            <label for="studentEmail">Email:</label>
+            <input type="email" id="studentEmail" value="john.doe@example.com">
+        </div>
+        <button onclick="testCreateStudent()">Create Student</button>
+        <button onclick="testGetStudents()">Get All Students</button>
+        <div id="studentResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- File Upload Test -->
+    <div class="test-section">
+        <h2>3. File Upload Test</h2>
+        <div class="form-group">
+            <label for="studentId">Student ID:</label>
+            <input type="number" id="studentId" value="1">
+        </div>
+        <div class="form-group">
+            <label for="resume">Resume File:</label>
+            <input type="file" id="resume" accept=".pdf,.doc,.docx">
+        </div>
+        <button onclick="testFileUpload()">Upload Resume</button>
+        <button onclick="testFileDownload()">Download Resume</button>
+        <div id="fileResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- Reports Test -->
+    <div class="test-section">
+        <h2>4. Reports & Analytics</h2>
+        <button onclick="testDashboard()">Get Dashboard Stats</button>
+        <button onclick="testEnrollmentStats()">Get Enrollment Stats</button>
+        <button onclick="testRevenueStats()">Get Revenue Stats</button>
+        <div id="reportsResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:8000/api/admins/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    showResponse('loginResponse', data, 'success');
+                } else {
+                    showResponse('loginResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('loginResponse', error.message, 'error');
+            }
+        }
+
+        async function testCreateStudent() {
+            try {
+                const response = await fetch('http://localhost:8000/api/students', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        first_name: document.getElementById('firstName').value,
+                        last_name: document.getElementById('lastName').value,
+                        email: document.getElementById('studentEmail').value,
+                        education_level: 'Bachelor'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('studentResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('studentResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetStudents() {
+            try {
+                const response = await fetch('http://localhost:8000/api/students', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('studentResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('studentResponse', error.message, 'error');
+            }
+        }
+
+        async function testFileUpload() {
+            const fileInput = document.getElementById('resume');
+            const studentId = document.getElementById('studentId').value;
+            
+            if (!fileInput.files[0]) {
+                showResponse('fileResponse', 'Please select a file', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('resume', fileInput.files[0]);
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/students/${studentId}/upload-resume`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                showResponse('fileResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('fileResponse', error.message, 'error');
+            }
+        }
+
+        async function testFileDownload() {
+            const studentId = document.getElementById('studentId').value;
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/students/${studentId}/download-resume`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'resume.pdf';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showResponse('fileResponse', 'File downloaded successfully', 'success');
+                } else {
+                    const data = await response.json();
+                    showResponse('fileResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('fileResponse', error.message, 'error');
+            }
+        }
+
+        async function testDashboard() {
+            try {
+                const response = await fetch('http://localhost:8000/api/reports/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('reportsResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('reportsResponse', error.message, 'error');
+            }
+        }
+
+        async function testEnrollmentStats() {
+            try {
+                const response = await fetch('http://localhost:8000/api/reports/enrollments', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('reportsResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('reportsResponse', error.message, 'error');
+            }
+        }
+
+        async function testRevenueStats() {
+            try {
+                const response = await fetch('http://localhost:8000/api/reports/revenue', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('reportsResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('reportsResponse', error.message, 'error');
+            }
+        }
+
+        function showResponse(elementId, data, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+            element.className = `response ${type}`;
+            element.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

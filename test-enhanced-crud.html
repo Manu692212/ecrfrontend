@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced CRUD API Test - Image Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        input[type="file"] {
+            padding: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        .show {
+            display: block;
+        }
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .size-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .size-controls input {
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Enhanced CRUD API Test - Image Upload & Designation</h1>
+    
+    <div class="container">
+        <!-- Academic Council Test -->
+        <div class="test-section">
+            <h2>Academic Council</h2>
+            <div class="form-group">
+                <label for="councilName">Name:</label>
+                <input type="text" id="councilName" value="Dr. Sarah Johnson">
+            </div>
+            <div class="form-group">
+                <label for="councilPosition">Position:</label>
+                <input type="text" id="councilPosition" value="Head of Department">
+            </div>
+            <div class="form-group">
+                <label for="councilDesignation">Designation:</label>
+                <input type="text" id="councilDesignation" value="Professor">
+            </div>
+            <div class="form-group">
+                <label for="councilQualifications">Qualifications:</label>
+                <textarea id="councilQualifications">Ph.D. in Computer Science, 15+ years experience</textarea>
+            </div>
+            <div class="form-group">
+                <label for="councilEmail">Email:</label>
+                <input type="email" id="councilEmail" value="sarah.j@ecr.edu">
+            </div>
+            <div class="form-group">
+                <label for="councilDepartment">Department:</label>
+                <input type="text" id="councilDepartment" value="Computer Science">
+            </div>
+            <div class="form-group">
+                <label>Image Size:</label>
+                <div class="size-controls">
+                    <select id="councilImageSize">
+                        <option value="small">Small (150x150)</option>
+                        <option value="medium" selected>Medium (300x300)</option>
+                        <option value="large">Large (600x600)</option>
+                    </select>
+                    <input type="number" id="councilImageWidth" placeholder="Width" min="50" max="2000">
+                    <input type="number" id="councilImageHeight" placeholder="Height" min="50" max="2000">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="councilImage">Image:</label>
+                <input type="file" id="councilImage" accept="image/*">
+                <img id="councilPreview" class="image-preview hidden">
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateAcademicCouncil()">Create</button>
+                <button onclick="testGetAcademicCouncils()">Get All</button>
+                <button onclick="testUpdateAcademicCouncil()">Update</button>
+                <button onclick="testUploadCouncilImage()">Upload Image</button>
+                <button onclick="testDeleteAcademicCouncil()">Delete</button>
+            </div>
+            <div id="councilResponse" class="response hidden"></div>
+        </div>
+
+        <!-- Management Test -->
+        <div class="test-section">
+            <h2>Management</h2>
+            <div class="form-group">
+                <label for="mgmtName">Name:</label>
+                <input type="text" id="mgmtName" value="Michael Chen">
+            </div>
+            <div class="form-group">
+                <label for="mgmtPosition">Position:</label>
+                <input type="text" id="mgmtPosition" value="Operations Manager">
+            </div>
+            <div class="form-group">
+                <label for="mgmtDesignation">Designation:</label>
+                <input type="text" id="mgmtDesignation" value="Senior Manager">
+            </div>
+            <div class="form-group">
+                <label for="mgmtQualifications">Qualifications:</label>
+                <textarea id="mgmtQualifications">MBA, 10+ years in operations management</textarea>
+            </div>
+            <div class="form-group">
+                <label for="mgmtEmail">Email:</label>
+                <input type="email" id="mgmtEmail" value="michael.c@ecr.edu">
+            </div>
+            <div class="form-group">
+                <label for="mgmtDepartment">Department:</label>
+                <input type="text" id="mgmtDepartment" value="Administration">
+            </div>
+            <div class="form-group">
+                <label>Image Size:</label>
+                <div class="size-controls">
+                    <select id="mgmtImageSize">
+                        <option value="small">Small (150x150)</option>
+                        <option value="medium" selected>Medium (300x300)</option>
+                        <option value="large">Large (600x600)</option>
+                    </select>
+                    <input type="number" id="mgmtImageWidth" placeholder="Width" min="50" max="2000">
+                    <input type="number" id="mgmtImageHeight" placeholder="Height" min="50" max="2000">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="mgmtImage">Image:</label>
+                <input type="file" id="mgmtImage" accept="image/*">
+                <img id="mgmtPreview" class="image-preview hidden">
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateManagement()">Create</button>
+                <button onclick="testGetManagement()">Get All</button>
+                <button onclick="testUpdateManagement()">Update</button>
+                <button onclick="testUploadManagementImage()">Upload Image</button>
+                <button onclick="testDeleteManagement()">Delete</button>
+            </div>
+            <div id="mgmtResponse" class="response hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        let councilId = null;
+        let mgmtId = null;
+
+        // Image preview handlers
+        document.getElementById('councilImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('councilPreview').src = e.target.result;
+                    document.getElementById('councilPreview').classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('mgmtImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('mgmtPreview').src = e.target.result;
+                    document.getElementById('mgmtPreview').classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Login first
+        async function login() {
+            try {
+                const response = await fetch('http://localhost:8000/api/admins/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'password'
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    console.log('Login successful');
+                } else {
+                    console.error('Login failed:', data);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+            }
+        }
+
+        // Academic Council Functions
+        async function testCreateAcademicCouncil() {
+            await login();
+            try {
+                const formData = new FormData();
+                formData.append('name', document.getElementById('councilName').value);
+                formData.append('position', document.getElementById('councilPosition').value);
+                formData.append('designation', document.getElementById('councilDesignation').value);
+                formData.append('qualifications', document.getElementById('councilQualifications').value);
+                formData.append('email', document.getElementById('councilEmail').value);
+                formData.append('department', document.getElementById('councilDepartment').value);
+                formData.append('image_size', document.getElementById('councilImageSize').value);
+                formData.append('is_active', true);
+
+                const imageFile = document.getElementById('councilImage').files[0];
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                    formData.append('image_width', document.getElementById('councilImageWidth').value || '');
+                    formData.append('image_height', document.getElementById('councilImageHeight').value || '');
+                }
+
+                const response = await fetch('http://localhost:8000/api/academic-council', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    councilId = data.council.id;
+                    showResponse('councilResponse', data, 'success');
+                } else {
+                    showResponse('councilResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetAcademicCouncils() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/academic-council', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('councilResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        async function testUploadCouncilImage() {
+            if (!councilId) {
+                showResponse('councilResponse', 'Please create a council member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const formData = new FormData();
+                const imageFile = document.getElementById('councilImage').files[0];
+                if (!imageFile) {
+                    showResponse('councilResponse', 'Please select an image', 'error');
+                    return;
+                }
+                
+                formData.append('image', imageFile);
+                formData.append('image_size', document.getElementById('councilImageSize').value);
+                formData.append('image_width', document.getElementById('councilImageWidth').value || '');
+                formData.append('image_height', document.getElementById('councilImageHeight').value || '');
+
+                const response = await fetch(`http://localhost:8000/api/academic-council/${councilId}/upload-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                showResponse('councilResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateAcademicCouncil() {
+            if (!councilId) {
+                showResponse('councilResponse', 'Please create a council member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/academic-council/${councilId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        designation: document.getElementById('councilDesignation').value + ' (Updated)',
+                        qualifications: document.getElementById('councilQualifications').value + ' (Updated)'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('councilResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteAcademicCouncil() {
+            if (!councilId) {
+                showResponse('councilResponse', 'Please create a council member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/academic-council/${councilId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('councilResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) councilId = null;
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        // Management Functions
+        async function testCreateManagement() {
+            await login();
+            try {
+                const formData = new FormData();
+                formData.append('name', document.getElementById('mgmtName').value);
+                formData.append('position', document.getElementById('mgmtPosition').value);
+                formData.append('designation', document.getElementById('mgmtDesignation').value);
+                formData.append('qualifications', document.getElementById('mgmtQualifications').value);
+                formData.append('email', document.getElementById('mgmtEmail').value);
+                formData.append('department', document.getElementById('mgmtDepartment').value);
+                formData.append('image_size', document.getElementById('mgmtImageSize').value);
+                formData.append('is_active', true);
+
+                const imageFile = document.getElementById('mgmtImage').files[0];
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                    formData.append('image_width', document.getElementById('mgmtImageWidth').value || '');
+                    formData.append('image_height', document.getElementById('mgmtImageHeight').value || '');
+                }
+
+                const response = await fetch('http://localhost:8000/api/management', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    mgmtId = data.management.id;
+                    showResponse('mgmtResponse', data, 'success');
+                } else {
+                    showResponse('mgmtResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetManagement() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/management', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('mgmtResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        async function testUploadManagementImage() {
+            if (!mgmtId) {
+                showResponse('mgmtResponse', 'Please create a management member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const formData = new FormData();
+                const imageFile = document.getElementById('mgmtImage').files[0];
+                if (!imageFile) {
+                    showResponse('mgmtResponse', 'Please select an image', 'error');
+                    return;
+                }
+                
+                formData.append('image', imageFile);
+                formData.append('image_size', document.getElementById('mgmtImageSize').value);
+                formData.append('image_width', document.getElementById('mgmtImageWidth').value || '');
+                formData.append('image_height', document.getElementById('mgmtImageHeight').value || '');
+
+                const response = await fetch(`http://localhost:8000/api/management/${mgmtId}/upload-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                showResponse('mgmtResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateManagement() {
+            if (!mgmtId) {
+                showResponse('mgmtResponse', 'Please create a management member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/management/${mgmtId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        designation: document.getElementById('mgmtDesignation').value + ' (Updated)',
+                        qualifications: document.getElementById('mgmtQualifications').value + ' (Updated)'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('mgmtResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteManagement() {
+            if (!mgmtId) {
+                showResponse('mgmtResponse', 'Please create a management member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/management/${mgmtId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('mgmtResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) mgmtId = null;
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        function showResponse(elementId, data, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+            element.className = `response ${type}`;
+            element.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

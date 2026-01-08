@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete CRUD API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        .show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Complete CRUD API Test - Admin Panel</h1>
+    
+    <div class="container">
+        <!-- Academic Council Test -->
+        <div class="test-section">
+            <h2>Academic Council</h2>
+            <div class="form-group">
+                <label for="councilName">Name:</label>
+                <input type="text" id="councilName" value="Dr. Sarah Johnson">
+            </div>
+            <div class="form-group">
+                <label for="councilPosition">Position:</label>
+                <input type="text" id="councilPosition" value="Head of Department">
+            </div>
+            <div class="form-group">
+                <label for="councilEmail">Email:</label>
+                <input type="email" id="councilEmail" value="sarah.j@ecr.edu">
+            </div>
+            <div class="form-group">
+                <label for="councilDepartment">Department:</label>
+                <input type="text" id="councilDepartment" value="Computer Science">
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateAcademicCouncil()">Create</button>
+                <button onclick="testGetAcademicCouncils()">Get All</button>
+                <button onclick="testUpdateAcademicCouncil()">Update</button>
+                <button onclick="testDeleteAcademicCouncil()">Delete</button>
+            </div>
+            <div id="councilResponse" class="response hidden"></div>
+        </div>
+
+        <!-- Management Test -->
+        <div class="test-section">
+            <h2>Management</h2>
+            <div class="form-group">
+                <label for="mgmtName">Name:</label>
+                <input type="text" id="mgmtName" value="Michael Chen">
+            </div>
+            <div class="form-group">
+                <label for="mgmtPosition">Position:</label>
+                <input type="text" id="mgmtPosition" value="Operations Manager">
+            </div>
+            <div class="form-group">
+                <label for="mgmtEmail">Email:</label>
+                <input type="email" id="mgmtEmail" value="michael.c@ecr.edu">
+            </div>
+            <div class="form-group">
+                <label for="mgmtDepartment">Department:</label>
+                <input type="text" id="mgmtDepartment" value="Administration">
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateManagement()">Create</button>
+                <button onclick="testGetManagement()">Get All</button>
+                <button onclick="testUpdateManagement()">Update</button>
+                <button onclick="testDeleteManagement()">Delete</button>
+            </div>
+            <div id="mgmtResponse" class="response hidden"></div>
+        </div>
+
+        <!-- Job Posting Test -->
+        <div class="test-section">
+            <h2>Job Postings</h2>
+            <div class="form-group">
+                <label for="jobTitle">Title:</label>
+                <input type="text" id="jobTitle" value="Senior Developer">
+            </div>
+            <div class="form-group">
+                <label for="jobDepartment">Department:</label>
+                <input type="text" id="jobDepartment" value="Engineering">
+            </div>
+            <div class="form-group">
+                <label for="jobLocation">Location:</label>
+                <input type="text" id="jobLocation" value="Bangalore">
+            </div>
+            <div class="form-group">
+                <label for="jobType">Employment Type:</label>
+                <select id="jobType">
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="contract">Contract</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="jobSalaryMin">Min Salary:</label>
+                <input type="number" id="jobSalaryMin" value="800000">
+            </div>
+            <div class="form-group">
+                <label for="jobDescription">Description:</label>
+                <textarea id="jobDescription">Looking for experienced developer...</textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateJob()">Create</button>
+                <button onclick="testGetJobs()">Get All</button>
+                <button onclick="testUpdateJob()">Update</button>
+                <button onclick="testDeleteJob()">Delete</button>
+            </div>
+            <div id="jobResponse" class="response hidden"></div>
+        </div>
+
+        <!-- Career Test -->
+        <div class="test-section">
+            <h2>Careers</h2>
+            <div class="form-group">
+                <label for="careerTitle">Title:</label>
+                <input type="text" id="careerTitle" value="Data Science Path">
+            </div>
+            <div class="form-group">
+                <label for="careerCategory">Category:</label>
+                <input type="text" id="careerCategory" value="Technology">
+            </div>
+            <div class="form-group">
+                <label for="careerLocation">Location:</label>
+                <input type="text" id="careerLocation" value="Remote">
+            </div>
+            <div class="form-group">
+                <label for="careerType">Employment Type:</label>
+                <select id="careerType">
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="contract">Contract</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="careerDescription">Description:</label>
+                <textarea id="careerDescription">Career path in data science...</textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateCareer()">Create</button>
+                <button onclick="testGetCareers()">Get All</button>
+                <button onclick="testUpdateCareer()">Update</button>
+                <button onclick="testDeleteCareer()">Delete</button>
+            </div>
+            <div id="careerResponse" class="response hidden"></div>
+        </div>
+
+        <!-- Facility Test -->
+        <div class="test-section">
+            <h2>Facilities</h2>
+            <div class="form-group">
+                <label for="facilityName">Name:</label>
+                <input type="text" id="facilityName" value="Library">
+            </div>
+            <div class="form-group">
+                <label for="facilityCategory">Category:</label>
+                <input type="text" id="facilityCategory" value="Academic">
+            </div>
+            <div class="form-group">
+                <label for="facilityCapacity">Capacity:</label>
+                <input type="number" id="facilityCapacity" value="200">
+            </div>
+            <div class="form-group">
+                <label for="facilityLocation">Location:</label>
+                <input type="text" id="facilityLocation" value="Main Building">
+            </div>
+            <div class="form-group">
+                <label for="facilityDescription">Description:</label>
+                <textarea id="facilityDescription">Modern library with digital resources...</textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateFacility()">Create</button>
+                <button onclick="testGetFacilities()">Get All</button>
+                <button onclick="testUpdateFacility()">Update</button>
+                <button onclick="testDeleteFacility()">Delete</button>
+            </div>
+            <div id="facilityResponse" class="response hidden"></div>
+        </div>
+
+        <!-- Settings Test -->
+        <div class="test-section">
+            <h2>Settings</h2>
+            <div class="form-group">
+                <label for="settingKey">Key:</label>
+                <input type="text" id="settingKey" value="site_description">
+            </div>
+            <div class="form-group">
+                <label for="settingValue">Value:</label>
+                <input type="text" id="settingValue" value="ECR Academy - Excellence in Education">
+            </div>
+            <div class="form-group">
+                <label for="settingGroup">Group:</label>
+                <input type="text" id="settingGroup" value="general">
+            </div>
+            <div class="form-group">
+                <label for="settingType">Type:</label>
+                <select id="settingType">
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="boolean">Boolean</option>
+                    <option value="json">JSON</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button onclick="testCreateSetting()">Create</button>
+                <button onclick="testGetSettings()">Get All</button>
+                <button onclick="testUpdateSetting()">Update</button>
+                <button onclick="testDeleteSetting()">Delete</button>
+                <button onclick="testGetSettingByKey()">Get by Key</button>
+                <button onclick="testGetSettingsByGroup()">Get by Group</button>
+            </div>
+            <div id="settingResponse" class="response hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        let councilId = null;
+        let mgmtId = null;
+        let jobId = null;
+        let careerId = null;
+        let facilityId = null;
+        let settingId = null;
+
+        // Login first
+        async function login() {
+            try {
+                const response = await fetch('http://localhost:8000/api/admins/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'password'
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    console.log('Login successful');
+                } else {
+                    console.error('Login failed:', data);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+            }
+        }
+
+        // Academic Council Functions
+        async function testCreateAcademicCouncil() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/academic-council', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById('councilName').value,
+                        position: document.getElementById('councilPosition').value,
+                        email: document.getElementById('councilEmail').value,
+                        department: document.getElementById('councilDepartment').value,
+                        is_active: true
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    councilId = data.council.id;
+                    showResponse('councilResponse', data, 'success');
+                } else {
+                    showResponse('councilResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetAcademicCouncils() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/academic-council', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('councilResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateAcademicCouncil() {
+            if (!councilId) {
+                showResponse('councilResponse', 'Please create a council member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/academic-council/${councilId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        position: document.getElementById('councilPosition').value + ' (Updated)'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('councilResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteAcademicCouncil() {
+            if (!councilId) {
+                showResponse('councilResponse', 'Please create a council member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/academic-council/${councilId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('councilResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) councilId = null;
+            } catch (error) {
+                showResponse('councilResponse', error.message, 'error');
+            }
+        }
+
+        // Management Functions
+        async function testCreateManagement() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/management', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById('mgmtName').value,
+                        position: document.getElementById('mgmtPosition').value,
+                        email: document.getElementById('mgmtEmail').value,
+                        department: document.getElementById('mgmtDepartment').value,
+                        is_active: true
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    mgmtId = data.management.id;
+                    showResponse('mgmtResponse', data, 'success');
+                } else {
+                    showResponse('mgmtResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetManagement() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/management', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('mgmtResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateManagement() {
+            if (!mgmtId) {
+                showResponse('mgmtResponse', 'Please create a management member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/management/${mgmtId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        position: document.getElementById('mgmtPosition').value + ' (Updated)'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('mgmtResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteManagement() {
+            if (!mgmtId) {
+                showResponse('mgmtResponse', 'Please create a management member first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/management/${mgmtId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('mgmtResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) mgmtId = null;
+            } catch (error) {
+                showResponse('mgmtResponse', error.message, 'error');
+            }
+        }
+
+        // Job Posting Functions
+        async function testCreateJob() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/job-postings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: document.getElementById('jobTitle').value,
+                        department: document.getElementById('jobDepartment').value,
+                        location: document.getElementById('jobLocation').value,
+                        employment_type: document.getElementById('jobType').value,
+                        salary_min: parseFloat(document.getElementById('jobSalaryMin').value),
+                        description: document.getElementById('jobDescription').value,
+                        is_active: true
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    jobId = data.job.id;
+                    showResponse('jobResponse', data, 'success');
+                } else {
+                    showResponse('jobResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('jobResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetJobs() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/job-postings', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('jobResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('jobResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateJob() {
+            if (!jobId) {
+                showResponse('jobResponse', 'Please create a job posting first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/job-postings/${jobId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: document.getElementById('jobTitle').value + ' (Updated)'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('jobResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('jobResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteJob() {
+            if (!jobId) {
+                showResponse('jobResponse', 'Please create a job posting first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/job-postings/${jobId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('jobResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) jobId = null;
+            } catch (error) {
+                showResponse('jobResponse', error.message, 'error');
+            }
+        }
+
+        // Career Functions
+        async function testCreateCareer() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/careers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: document.getElementById('careerTitle').value,
+                        category: document.getElementById('careerCategory').value,
+                        location: document.getElementById('careerLocation').value,
+                        employment_type: document.getElementById('careerType').value,
+                        description: document.getElementById('careerDescription').value,
+                        is_featured: true,
+                        is_active: true
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    careerId = data.career.id;
+                    showResponse('careerResponse', data, 'success');
+                } else {
+                    showResponse('careerResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('careerResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetCareers() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/careers', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('careerResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('careerResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateCareer() {
+            if (!careerId) {
+                showResponse('careerResponse', 'Please create a career first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/careers/${careerId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: document.getElementById('careerTitle').value + ' (Updated)'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('careerResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('careerResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteCareer() {
+            if (!careerId) {
+                showResponse('careerResponse', 'Please create a career first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/careers/${careerId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('careerResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) careerId = null;
+            } catch (error) {
+                showResponse('careerResponse', error.message, 'error');
+            }
+        }
+
+        // Facility Functions
+        async function testCreateFacility() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/facilities', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById('facilityName').value,
+                        category: document.getElementById('facilityCategory').value,
+                        capacity: parseInt(document.getElementById('facilityCapacity').value),
+                        location: document.getElementById('facilityLocation').value,
+                        description: document.getElementById('facilityDescription').value,
+                        features: ['WiFi', 'Projector', 'Air Conditioning'],
+                        is_featured: true,
+                        is_active: true
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    facilityId = data.facility.id;
+                    showResponse('facilityResponse', data, 'success');
+                } else {
+                    showResponse('facilityResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('facilityResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetFacilities() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/facilities', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('facilityResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('facilityResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateFacility() {
+            if (!facilityId) {
+                showResponse('facilityResponse', 'Please create a facility first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/facilities/${facilityId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        capacity: parseInt(document.getElementById('facilityCapacity').value) + 10
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('facilityResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('facilityResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteFacility() {
+            if (!facilityId) {
+                showResponse('facilityResponse', 'Please create a facility first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/facilities/${facilityId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('facilityResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) facilityId = null;
+            } catch (error) {
+                showResponse('facilityResponse', error.message, 'error');
+            }
+        }
+
+        // Settings Functions
+        async function testCreateSetting() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        key: document.getElementById('settingKey').value,
+                        value: document.getElementById('settingValue').value,
+                        group: document.getElementById('settingGroup').value,
+                        type: document.getElementById('settingType').value,
+                        is_public: true
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    settingId = data.setting.id;
+                    showResponse('settingResponse', data, 'success');
+                } else {
+                    showResponse('settingResponse', data, 'error');
+                }
+            } catch (error) {
+                showResponse('settingResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetSettings() {
+            await login();
+            try {
+                const response = await fetch('http://localhost:8000/api/settings', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('settingResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('settingResponse', error.message, 'error');
+            }
+        }
+
+        async function testUpdateSetting() {
+            if (!settingId) {
+                showResponse('settingResponse', 'Please create a setting first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/settings/${settingId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        value: document.getElementById('settingValue').value + ' (Updated)'
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('settingResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('settingResponse', error.message, 'error');
+            }
+        }
+
+        async function testDeleteSetting() {
+            if (!settingId) {
+                showResponse('settingResponse', 'Please create a setting first', 'error');
+                return;
+            }
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/settings/${settingId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('settingResponse', data, response.ok ? 'success' : 'error');
+                if (response.ok) settingId = null;
+            } catch (error) {
+                showResponse('settingResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetSettingByKey() {
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/settings/key/${document.getElementById('settingKey').value}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('settingResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('settingResponse', error.message, 'error');
+            }
+        }
+
+        async function testGetSettingsByGroup() {
+            await login();
+            try {
+                const response = await fetch(`http://localhost:8000/api/settings/group/${document.getElementById('settingGroup').value}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('settingResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('settingResponse', error.message, 'error');
+            }
+        }
+
+        function showResponse(elementId, data, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+            element.className = `response ${type}`;
+            element.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

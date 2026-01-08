@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* ECR Academy Color Palette - Aviation Professional */
+    --background: 222 47% 6%;
+    --foreground: 40 30% 95%;
+
+    --card: 222 47% 8%;
+    --card-foreground: 40 30% 95%;
+
+    --popover: 222 47% 8%;
+    --popover-foreground: 40 30% 95%;
+
+    --primary: 40 55% 58%;
+    --primary-foreground: 222 47% 6%;
+
+    --secondary: 215 60% 25%;
+    --secondary-foreground: 40 30% 95%;
+
+    --muted: 222 30% 15%;
+    --muted-foreground: 220 15% 60%;
+
+    --accent: 40 55% 58%;
+    --accent-foreground: 222 47% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 40 55% 58%;
+
+    --radius: 0.75rem;
+
+    /* Custom ECR Colors */
+    --navy: 222 47% 6%;
+    --navy-light: 222 40% 12%;
+    --gold: 40 55% 58%;
+    --gold-light: 40 60% 70%;
+    --gold-dark: 40 50% 45%;
+    --sky: 200 80% 55%;
+    --sky-light: 200 80% 70%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(222 47% 6%) 0%, hsl(222 40% 12%) 50%, hsl(215 60% 18%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(40 55% 58%) 0%, hsl(40 50% 45%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(222 40% 10%) 0%, hsl(222 47% 8%) 100%);
+    --gradient-sky: linear-gradient(135deg, hsl(200 80% 55%) 0%, hsl(215 60% 45%) 100%);
+
+    /* Shadows */
+    --shadow-gold: 0 4px 30px hsl(40 55% 58% / 0.15);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 40px hsl(40 55% 58% / 0.2);
+
+    /* Sidebar */
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 40 30% 95%;
+    --sidebar-primary: 40 55% 58%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 222 40% 12%;
+    --sidebar-accent-foreground: 40 30% 95%;
+    --sidebar-border: 222 30% 18%;
+    --sidebar-ring: 40 55% 58%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 40 30% 95%;
+    --card: 222 47% 8%;
+    --card-foreground: 40 30% 95%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 40 30% 95%;
+    --primary: 40 55% 58%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 215 60% 25%;
+    --secondary-foreground: 40 30% 95%;
+    --muted: 222 30% 15%;
+    --muted-foreground: 220 15% 60%;
+    --accent: 40 55% 58%;
+    --accent-foreground: 222 47% 6%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 40 55% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer components {
+  .ecr-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .ecr-section {
+    @apply py-16 md:py-24;
+  }
+
+  .ecr-heading {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight;
+  }
+
+  .ecr-subheading {
+    @apply text-xl md:text-2xl font-medium text-muted-foreground;
+  }
+
+  .ecr-gold-text {
+    @apply text-primary;
+  }
+
+  .ecr-gradient-text {
+    background: linear-gradient(135deg, hsl(40 55% 58%) 0%, hsl(40 60% 70%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .ecr-card {
+    background: var(--gradient-card);
+    @apply rounded-xl border border-border p-6 transition-all duration-300;
+  }
+
+  .ecr-card:hover {
+    @apply border-primary/30;
+    box-shadow: var(--shadow-gold);
+    transform: translateY(-4px);
+  }
+
+  .ecr-btn-primary {
+    background: var(--gradient-gold);
+    @apply text-primary-foreground font-semibold px-8 py-3 rounded-lg transition-all duration-300;
+  }
+
+  .ecr-btn-primary:hover {
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
+  }
+
+  .ecr-btn-outline {
+    @apply border-2 border-primary text-primary font-semibold px-8 py-3 rounded-lg transition-all duration-300 bg-transparent;
+  }
+
+  .ecr-btn-outline:hover {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-count {
+    animation: countUp 2s ease-out forwards;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .bg-hero-pattern {
+    background-image: 
+      radial-gradient(circle at 20% 50%, hsl(40 55% 58% / 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsl(200 80% 55% / 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 40% 80%, hsl(215 60% 45% / 0.08) 0%, transparent 40%);
+  }
+}
