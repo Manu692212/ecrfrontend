@@ -48,10 +48,23 @@ const server = http.createServer((req, res) => {
   }
 
   // Serve static files or fallback to index.html for client-side routing
-  let filePath = path.join(__dirname, 'dist', req.url === '/' ? 'index.html' : req.url);
-  
-  // If it's a directory or doesn't exist, serve index.html for React Router
-  if (!path.extname(filePath) || !fs.existsSync(filePath)) {
+  const requestedUrl = req.url.split('?')[0].split('#')[0];
+  const safePath = requestedUrl === '/'
+    ? 'index.html'
+    : requestedUrl.replace(/^\/+/, '');
+  let filePath = path.join(__dirname, 'dist', safePath);
+
+  const hasExtension = Boolean(path.extname(safePath));
+
+  // If the path looks like an asset and it doesn't exist, bail with 404
+  if (hasExtension && !fs.existsSync(filePath)) {
+    res.writeHead(404, { 'Content-Type': 'text/html' });
+    res.end('<h1>404 Not Found</h1>', 'utf-8');
+    return;
+  }
+
+  // For clean URLs (no extension), fall back to index.html when missing
+  if (!hasExtension && !fs.existsSync(filePath)) {
     filePath = path.join(__dirname, 'dist', 'index.html');
   }
 
