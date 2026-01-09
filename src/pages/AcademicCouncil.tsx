@@ -52,7 +52,10 @@ const AcademicCouncil = () => {
           return;
         }
 
-        const mapped: CouncilMember[] = (Array.isArray(data) ? data : []).map((m: any) => ({
+        // Accept both plain arrays and responses wrapped in { data: [...] }
+        const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+
+        const mapped: CouncilMember[] = list.map((m: any) => ({
           id: m.id,
           name: m.name ?? '',
           designation: m.designation ?? m.position ?? undefined,
