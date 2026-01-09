@@ -1,4 +1,6 @@
-const DEFAULT_API_BASE_URL = import.meta.env.DEV ? 'http://localhost:8000/api' : '/api';
+const DEFAULT_API_BASE_URL = import.meta.env.DEV 
+  ? 'http://localhost:8000/api' 
+  : 'https://ecrbackend.onrender.com/api';
 
 const resolveApiBaseUrl = () => {
   const raw = import.meta.env.VITE_API_URL?.trim();
