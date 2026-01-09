@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ecrfrontend
+    runtime: node
+    startCommand: node server.cjs
+    buildCommand: npm run build
+    envVars:
+      - key: VITE_API_URL
+        value: https://ecrbackend.onrender.com/api

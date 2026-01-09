@@ -83,7 +83,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-const PORT = 8081;
+const PORT = process.env.PORT || 8081;
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}/`);
 });
