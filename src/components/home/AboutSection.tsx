@@ -11,6 +11,8 @@ const features = [
   'Part-time Job Opportunities on Campus',
 ];
 
+const CAMPUS_AERIAL_IMAGE = '/images/ecr-campus-aerial.webp';
+
 const AboutSection = () => {
   return (
     <section className="ecr-section bg-background">
@@ -18,17 +20,18 @@ const AboutSection = () => {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Image Side */}
           <div className="relative">
-            <div className="relative rounded-2xl overflow-hidden">
-              <div className="aspect-[4/3] bg-gradient-to-br from-secondary to-muted flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="font-display text-4xl font-bold text-primary">ECR</span>
-                  </div>
-                  <p className="text-muted-foreground">ECR Group of Institutions</p>
-                </div>
+            <div className="relative rounded-2xl overflow-hidden shadow-[0_30px_80px_-50px_rgba(15,23,42,0.9)]">
+              <div className="aspect-[4/3]">
+                <img
+                  src={CAMPUS_AERIAL_IMAGE}
+                  alt="Aerial view of the ECR Group of Institutions campus"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/30 via-transparent to-white/5" />
               </div>
               {/* Decorative Element */}
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gold-gradient rounded-2xl -z-10" />
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gold-gradient rounded-2xl -z-10 blur-xl opacity-70" />
             </div>
 
             {/* Floating Card */}
