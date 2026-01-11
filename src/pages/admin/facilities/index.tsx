@@ -36,7 +36,7 @@ const createFacility = async (payload: FacilityFormValues) => {
   const formData = new FormData();
   formData.append('name', payload.name);
   if (payload.label) formData.append('label', payload.label);
-  if (payload.description) formData.append('description', payload.description);
+  formData.append('description', payload.description);
   if (payload.category) formData.append('category', payload.category);
   formData.append('status', payload.status);
   if (typeof payload.order === 'number') formData.append('order', String(payload.order));

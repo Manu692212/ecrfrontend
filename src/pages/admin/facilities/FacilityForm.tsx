@@ -27,10 +27,13 @@ import { ArrowLeft, Loader2, Save, Upload, X, ImageIcon, Tag } from 'lucide-reac
 type FacilityStatus = 'active' | 'inactive';
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  label: z.string().optional(),
-  description: z.string().optional(),
-  category: z.string().optional(),
+  name: z.string().trim().min(2, { message: 'Name must be at least 2 characters.' }),
+  label: z.string().trim().optional(),
+  description: z
+    .string()
+    .trim()
+    .min(10, { message: 'Description must be at least 10 characters.' }),
+  category: z.string().trim().optional(),
   status: z.enum(['active', 'inactive']),
   order: z
     .number({ invalid_type_error: 'Display order must be a number.' })

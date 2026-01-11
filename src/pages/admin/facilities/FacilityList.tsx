@@ -7,6 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { facilitiesAPI } from '@/lib/api';
 import { ImageIcon, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const MEDIA_BASE_URL = API_BASE_URL.replace(/\/api$/, '') + '/media';
+const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
+
 interface FacilityRecord {
   id: string;
   name: string;
@@ -18,18 +22,46 @@ interface FacilityRecord {
   image?: string;
 }
 
-const resolveFacilityImage = (facility: any) => {
-  if (facility?.image_url) {
-    return facility.image_url;
+const buildMediaUrlFromPath = (path: string) => {
+  const sanitized = path.replace(/^\/+/, '');
+  if (!sanitized) return null;
+
+  if (sanitized.startsWith('storage/')) {
+    return `${MEDIA_ORIGIN}/${sanitized}`;
   }
 
-  const rawImage = facility?.image;
-  if (!rawImage) return undefined;
+  if (sanitized.startsWith('media/')) {
+    return `${MEDIA_ORIGIN}/${sanitized}`;
+  }
 
-  const baseApi = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-  const mediaBase = baseApi.replace(/\/api$/, '') + '/media';
-  const sanitized = String(rawImage).replace(/^\/+/, '');
-  return `${mediaBase}/${sanitized}`;
+  return `${MEDIA_BASE_URL}/${sanitized}`;
+};
+
+const normalizeFacilityImageUrl = (raw: unknown) => {
+  if (!raw) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+
+  try {
+    const parsed = new URL(value);
+    if (['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
+      const derivedPath = parsed.pathname.replace(/^\/+/, '');
+      return buildMediaUrlFromPath(derivedPath ?? parsed.pathname);
+    }
+    if (parsed.protocol === 'http:') {
+      const pathWithParams = `${parsed.pathname}${parsed.search ?? ''}${parsed.hash ?? ''}`;
+      return `https://${parsed.host}${pathWithParams}`;
+    }
+    return parsed.href;
+  } catch {
+    return buildMediaUrlFromPath(value);
+  }
+};
+
+const resolveFacilityImage = (facility: any) => {
+  return (
+    normalizeFacilityImageUrl(facility?.image_url) ?? normalizeFacilityImageUrl(facility?.image)
+  ) ?? undefined;
 };
 
 const mapFacilityRecord = (facility: any): FacilityRecord => ({
