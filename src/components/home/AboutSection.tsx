@@ -11,7 +11,7 @@ const features = [
   'Part-time Job Opportunities on Campus',
 ];
 
-const CAMPUS_AERIAL_IMAGE = '/images/ecr-campus-aerial.webp';
+const CAMPUS_AERIAL_IMAGE = '/ecr-campus-aerial.webp';
 
 const AboutSection = () => {
   return (
