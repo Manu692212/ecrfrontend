@@ -5,6 +5,7 @@ import { facilitiesAPI } from '@/lib/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const MEDIA_BASE_URL = API_BASE_URL.replace(/\/api$/, '') + '/media';
+const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
 
 type FacilityRecord = {
   id: string;
@@ -18,17 +19,42 @@ type FacilityRecord = {
   image?: string | null;
 };
 
+const buildMediaUrlFromPath = (path: string) => {
+  const sanitized = path.replace(/^\/+/, '');
+  if (!sanitized) return null;
+
+  if (sanitized.startsWith('storage/')) {
+    return `${MEDIA_ORIGIN}/${sanitized}`;
+  }
+
+  if (sanitized.startsWith('media/')) {
+    return `${MEDIA_ORIGIN}/${sanitized}`;
+  }
+
+  return `${MEDIA_BASE_URL}/${sanitized}`;
+};
+
+const normalizeFacilityImageUrl = (raw: unknown) => {
+  if (!raw) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+
+  try {
+    const parsed = new URL(value);
+    if (['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
+      const derivedPath = parsed.pathname.replace(/^\/+/, '');
+      return buildMediaUrlFromPath(derivedPath ?? parsed.pathname) ?? null;
+    }
+    return parsed.href;
+  } catch {
+    return buildMediaUrlFromPath(value);
+  }
+};
+
 const resolveFacilityImage = (facility: any) => {
-  if (facility?.image_url) {
-    return facility.image_url;
-  }
-
-  if (facility?.image) {
-    const sanitized = String(facility.image).replace(/^\/+/, '');
-    return `${MEDIA_BASE_URL}/${sanitized}`;
-  }
-
-  return null;
+  return (
+    normalizeFacilityImageUrl(facility?.image_url) ?? normalizeFacilityImageUrl(facility?.image)
+  );
 };
 
 const mapFacilitiesResponse = (payload: any): FacilityRecord[] => {
