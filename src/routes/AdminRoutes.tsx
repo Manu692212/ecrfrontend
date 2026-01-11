@@ -15,6 +15,7 @@ import AdminContactPage from '@/pages/admin/contact';
 import AdminApplicationsPage from '@/pages/admin/applications';
 import AdminSettingsPage from '@/pages/admin/settings';
 import AdminUsersPage from '@/pages/admin/settings/users';
+import FacilitiesPage from '@/pages/admin/facilities';
 
 function AdminDashboard() {
   return (
@@ -37,6 +38,7 @@ function AdminDashboard() {
 
         {/* Management Routes */}
         <Route path="management/*" element={<ManagementPage />} />
+        <Route path="facilities/*" element={<FacilitiesPage />} />
         <Route path="applications" element={<AdminApplicationsPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="settings/users" element={<AdminUsersPage />} />

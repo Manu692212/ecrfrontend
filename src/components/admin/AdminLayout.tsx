@@ -12,6 +12,7 @@ const menuItems = [
   { name: 'Applications', path: '/admin/applications', icon: '🗂️' },
   { name: 'Academic Council', path: '/admin/academic-council', icon: '👥' },
   { name: 'Management', path: '/admin/management', icon: '🏢' },
+  { name: 'Facilities', path: '/admin/facilities', icon: '🏟️' },
   { name: 'Admission Page', path: '/admin/admission', icon: '📝' },
   { name: 'Careers Page', path: '/admin/careers', icon: '💼' },
   { name: 'Contact Page', path: '/admin/contact', icon: '✉️' },

@@ -413,6 +413,44 @@ export const managementAPI = {
   },
 };
 
+export const facilitiesAPI = {
+  getAll: async (page = 1) => {
+    return api.get(`/facilities?page=${page}`);
+  },
+  getById: async (id: string | number) => {
+    return api.get(`/facilities/${id}`);
+  },
+  create: async (data: FormData) => {
+    return api.post('/facilities', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  update: async (id: string | number, data: any) => {
+    return api.put(`/facilities/${id}`, data);
+  },
+  delete: async (id: string | number) => {
+    return api.delete(`/facilities/${id}`);
+  },
+  uploadImage: async (
+    id: string | number,
+    file: File,
+    options?: { image_size?: 'small' | 'medium' | 'large'; image_width?: number; image_height?: number }
+  ) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    if (options?.image_size) formData.append('image_size', options.image_size);
+    if (options?.image_width) formData.append('image_width', String(options.image_width));
+    if (options?.image_height) formData.append('image_height', String(options.image_height));
+
+    return api.post(`/facilities/${id}/upload-image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  getPublicList: async () => {
+    return api.get('/public/facilities');
+  },
+};
+
 export const settingsAPI = {
   getGroupPublic: async (group: string) => {
     const response = await api.get(`/public/settings/group/${group}`);
