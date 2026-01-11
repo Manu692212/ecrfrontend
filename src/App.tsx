@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import IndexPage from "@/pages/Index";
 import AboutPage from "@/pages/About";
 import CoursesPage from "@/pages/Courses";
@@ -25,6 +25,7 @@ const App = () => {
       <Route path="/careers" element={<CareersPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/facilities" element={<FacilitiesPage />} />
+      <Route path="/login" element={<Navigate to="/admin/login" replace />} />
       <Route path="/admin/*" element={<AdminRoutes />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
