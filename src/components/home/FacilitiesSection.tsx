@@ -4,8 +4,9 @@ import { facilitiesAPI } from '@/lib/api';
 import { ImageIcon } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const MEDIA_BASE_URL = API_BASE_URL.replace(/\/api$/, '') + '/media';
 const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
+const MEDIA_STORAGE_BASE_URL = `${MEDIA_ORIGIN}/storage`;
+const MEDIA_MEDIA_BASE_URL = `${MEDIA_ORIGIN}/media`;
 
 type FacilityRecord = {
   id: string;
@@ -30,7 +31,7 @@ const buildMediaUrlFromPath = (path: string) => {
     return `${MEDIA_ORIGIN}/${sanitized}`;
   }
 
-  return `${MEDIA_BASE_URL}/${sanitized}`;
+  return `${MEDIA_STORAGE_BASE_URL}/${sanitized}`;
 };
 
 const normalizeFacilityImageUrl = (raw: unknown) => {
