@@ -14,16 +14,22 @@ const resolveApiBaseUrl = () => {
   const supplyFallback = () => DEFAULT_API_BASE_URL;
 
   try {
-    const parsed = typeof window !== 'undefined'
+    const isBrowser = typeof window !== 'undefined';
+    const parsed = isBrowser
       ? new URL(sanitized, window.location.origin)
       : new URL(sanitized);
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
+    const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(sanitized);
+    const isSameOrigin = isBrowser && parsed.origin === window.location.origin;
 
-    if (
-      import.meta.env.DEV &&
-      typeof window !== 'undefined' &&
-      parsed.origin === window.location.origin
-    ) {
-      return DEFAULT_API_BASE_URL;
+    if (!import.meta.env.DEV) {
+      if (isLocalhost) {
+        return DEFAULT_API_BASE_URL;
+      }
+
+      if (isSameOrigin && (!isAbsoluteUrl || sanitized.startsWith('/'))) {
+        return DEFAULT_API_BASE_URL;
+      }
     }
 
     if (!parsed.pathname || parsed.pathname === '/' || parsed.pathname === '') {
