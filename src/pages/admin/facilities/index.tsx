@@ -4,17 +4,49 @@ import FacilityList from './FacilityList';
 import FacilityForm, { FacilityFormValues } from './FacilityForm';
 import { facilitiesAPI } from '@/lib/api';
 
-const resolveFacilityForForm = (facility: any): FacilityFormValues & { imageUrl?: string } => {
-  const image = facility?.image_url ?? facility?.image ?? null;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const MEDIA_BASE_URL = API_BASE_URL.replace(/\/api$/, '') + '/media';
+const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
 
-  const imageUrl = (() => {
-    if (!image) return undefined;
-    if (typeof image === 'string' && image.startsWith('http')) return image;
-    const baseApi = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-    const mediaBase = baseApi.replace(/\/api$/, '') + '/media';
-    const sanitized = String(image).replace(/^\/+/, '');
-    return `${mediaBase}/${sanitized}`;
-  })();
+const buildMediaUrlFromPath = (path: string) => {
+  const sanitized = path.replace(/^\/+/, '');
+  if (!sanitized) return null;
+
+  if (sanitized.startsWith('storage/')) {
+    return `${MEDIA_ORIGIN}/${sanitized}`;
+  }
+
+  if (sanitized.startsWith('media/')) {
+    return `${MEDIA_ORIGIN}/${sanitized}`;
+  }
+
+  return `${MEDIA_BASE_URL}/${sanitized}`;
+};
+
+const normalizeFacilityImageUrl = (raw: unknown) => {
+  if (!raw) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+
+  try {
+    const parsed = new URL(value);
+    if (['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
+      const derivedPath = parsed.pathname.replace(/^\/+/, '');
+      return buildMediaUrlFromPath(derivedPath ?? parsed.pathname);
+    }
+    if (parsed.protocol === 'http:') {
+      const pathWithParams = `${parsed.pathname}${parsed.search ?? ''}${parsed.hash ?? ''}`;
+      return `https://${parsed.host}${pathWithParams}`;
+    }
+    return parsed.href;
+  } catch {
+    return buildMediaUrlFromPath(value);
+  }
+};
+
+const resolveFacilityForForm = (facility: any): FacilityFormValues & { imageUrl?: string } => {
+  const imageUrl =
+    normalizeFacilityImageUrl(facility?.image_url) ?? normalizeFacilityImageUrl(facility?.image) ?? undefined;
 
   return {
     name: facility?.name ?? '',
@@ -36,7 +68,7 @@ const createFacility = async (payload: FacilityFormValues) => {
   const formData = new FormData();
   formData.append('name', payload.name);
   if (payload.label) formData.append('label', payload.label);
-  formData.append('description', payload.description);
+  if (payload.description) formData.append('description', payload.description);
   if (payload.category) formData.append('category', payload.category);
   formData.append('status', payload.status);
   if (typeof payload.order === 'number') formData.append('order', String(payload.order));

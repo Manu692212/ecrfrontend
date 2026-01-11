@@ -29,10 +29,7 @@ type FacilityStatus = 'active' | 'inactive';
 const formSchema = z.object({
   name: z.string().trim().min(2, { message: 'Name must be at least 2 characters.' }),
   label: z.string().trim().optional(),
-  description: z
-    .string()
-    .trim()
-    .min(10, { message: 'Description must be at least 10 characters.' }),
+  description: z.string().trim().optional(),
   category: z.string().trim().optional(),
   status: z.enum(['active', 'inactive']),
   order: z
