@@ -45,6 +45,10 @@ const normalizeFacilityImageUrl = (raw: unknown) => {
       const derivedPath = parsed.pathname.replace(/^\/+/, '');
       return buildMediaUrlFromPath(derivedPath ?? parsed.pathname) ?? null;
     }
+    if (parsed.protocol === 'http:') {
+      const pathWithParams = `${parsed.pathname}${parsed.search ?? ''}${parsed.hash ?? ''}`;
+      return `https://${parsed.host}${pathWithParams}`;
+    }
     return parsed.href;
   } catch {
     return buildMediaUrlFromPath(value);
