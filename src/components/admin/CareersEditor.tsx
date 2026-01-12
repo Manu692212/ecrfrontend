@@ -25,40 +25,38 @@ const CareersEditor = () => {
   const [jobOpenings, setJobOpenings] = useState<JobOpening[]>([
     {
       id: '1',
-      title: 'Aviation Instructor',
-      department: 'Academics',
-      location: 'Mangalore',
+      title: 'Assistant Professor - Aviation Management',
+      department: 'Aviation Studies',
+      location: 'Udupi Campus',
       type: 'Full-time',
-      experience: '3+ years',
-      salary: '₹8-12 LPA',
-      description: 'We are looking for an experienced aviation instructor to join our academic team.',
+      experience: '3-5 years',
+      salary: '₹10-14 LPA',
+      description: 'Lead the Aviation department with engaging lectures and hands-on training.',
       requirements: [
-        'Bachelors degree in Aviation or related field',
-        '3+ years of teaching experience',
-        'Strong communication skills',
-        'Industry certifications preferred'
+        'PhD/M.Tech in Aviation or related field',
+        'Minimum 3 years of teaching experience',
+        'Industry exposure preferred',
       ],
-      deadline: '2024-02-15',
-      active: true
+      deadline: '2024-05-31',
+      active: true,
     },
     {
       id: '2',
-      title: 'Marketing Executive',
-      department: 'Marketing',
-      location: 'Mangalore',
+      title: 'Digital Marketing Trainer',
+      department: 'Management Studies',
+      location: 'Mangalore Campus',
       type: 'Full-time',
-      experience: '2+ years',
-      salary: '₹4-6 LPA',
-      description: 'Join our marketing team to promote ECR Academy programs and drive student enrollment.',
+      experience: '4+ years',
+      salary: '₹8-12 LPA',
+      description: 'Guide students through the latest digital marketing tactics and tools.',
       requirements: [
-        'MBA in Marketing or related field',
-        '2+ years of marketing experience',
-        'Digital marketing knowledge',
-        'Excellent communication skills'
+        'MBA with Digital Marketing specialization',
+        'Hands-on experience with campaigns',
+        'Strong communication skills',
       ],
-      deadline: '2024-01-31',
-      active: true
-    }
+      deadline: '2024-06-15',
+      active: true,
+    },
   ]);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -291,7 +289,7 @@ const CareersEditor = () => {
                     <select
                       value={job.department}
                       onChange={(e) => updateJobOpening(job.id, 'department', e.target.value)}
-                      className="w-full p-2 border rounded-md"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Select department</option>
                       {departments.map(dept => (
@@ -312,7 +310,7 @@ const CareersEditor = () => {
                     <select
                       value={job.type}
                       onChange={(e) => updateJobOpening(job.id, 'type', e.target.value)}
-                      className="w-full p-2 border rounded-md"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {jobTypes.map(type => (
                         <option key={type} value={type}>{type}</option>

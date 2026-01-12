@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Save, Plus, Trash2 } from 'lucide-react';
+import { Edit, Save, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 import { settingsAPI } from '@/lib/api';
 
 interface BlogPost {
@@ -128,6 +128,30 @@ const BlogEditor = () => {
     ));
   };
 
+  const handleImageFileChange = async (
+    id: string,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (result) {
+        updateBlogPost(id, 'image', result);
+      }
+    };
+    reader.onerror = () => {
+      console.error('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = (id: string) => {
+    updateBlogPost(id, 'image', '/placeholder.svg');
+  };
+
   const addNewBlogPost = () => {
     const newPost: BlogPost = {
       id: Date.now().toString(),
@@ -245,7 +269,7 @@ const BlogEditor = () => {
                     <select
                       value={post.category}
                       onChange={(e) => updateBlogPost(post.id, 'category', e.target.value)}
-                      className="w-full p-2 border rounded-md"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Select category</option>
                       {categories.map(cat => (
@@ -272,6 +296,57 @@ const BlogEditor = () => {
                     rows={6}
                   />
                 </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Featured Image</Label>
+                    <div className="flex items-start gap-4">
+                      <div className="relative h-28 w-40 overflow-hidden rounded-xl border border-dashed border-border bg-muted">
+                        {post.image ? (
+                          <img
+                            src={post.image}
+                            alt={post.title || 'Blog featured image'}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                            <ImageIcon className="h-6 w-6" />
+                            <span className="text-xs">No image</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(event) => handleImageFileChange(post.id, event)}
+                        />
+                        <Button
+                          variant="outline"
+                          type="button"
+                          size="sm"
+                          onClick={() => handleRemoveImage(post.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Uploads are stored as data URLs in the settings payload. Use optimized images to keep payload sizes reasonable.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Image URL</Label>
+                    <Input
+                      value={post.image}
+                      onChange={(e) => updateBlogPost(post.id, 'image', e.target.value)}
+                      placeholder="Paste image URL or leave after upload"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Provide a hosted URL if you prefer not to embed the image directly.
+                    </p>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -293,7 +368,23 @@ const BlogEditor = () => {
           <div className="space-y-4">
             {blogPosts.map((post) => (
               <div key={post.id} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-2">
+                  <div className="w-full md:w-48">
+                    <div className="aspect-video overflow-hidden rounded-lg border">
+                      {post.image ? (
+                        <img
+                          src={post.image}
+                          alt={post.title || 'Blog featured image'}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted text-muted-foreground">
+                          <ImageIcon className="h-6 w-6" />
+                          <span className="text-xs">No image</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <div>
                     <h4 className="font-semibold text-lg">{post.title}</h4>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
