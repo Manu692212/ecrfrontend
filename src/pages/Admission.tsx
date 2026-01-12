@@ -1,51 +1,158 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ArrowRight, FileText, Calendar, CreditCard, GraduationCap } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
-const admissionSteps = [
-  {
-    icon: FileText,
-    title: 'Fill Application',
-    description: 'Complete the online application form with accurate details and upload required documents.',
-  },
-  {
-    icon: Calendar,
-    title: 'Document Verification',
-    description: 'Our team will verify your documents and academic records within 2-3 working days.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Fee Payment',
-    description: 'Pay the admission fee online or at our campus. Educational loans available.',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Start Learning',
-    description: 'Receive your admission confirmation and begin your journey at ECR Academy.',
-  },
-];
+interface AdmissionProcessStep {
+  step: number;
+  title: string;
+  description: string;
+}
 
-const eligibility = [
-  'Minimum 50% marks in 10+2 for undergraduate programs',
-  'Science stream mandatory for Nursing and Paramedical courses',
-  'Age limit varies by course (typically 17-25 years)',
-  'Valid ID proof and academic documents required',
-  'Entrance exam may be required for certain programs',
-];
+interface AdmissionRequirement {
+  category: string;
+  items: string[];
+}
 
-const documents = [
-  '10th & 12th Mark Sheets',
-  'Transfer Certificate',
-  'Migration Certificate',
-  'Passport Size Photos (8 copies)',
-  'Aadhar Card Copy',
-  'Income Certificate (for scholarship)',
-  'Caste Certificate (if applicable)',
-  'Medical Fitness Certificate',
-];
+interface AdmissionImportantDate {
+  event: string;
+  date: string;
+  description: string;
+}
+
+interface AdmissionContent {
+  title: string;
+  subtitle: string;
+  description: string;
+  process: AdmissionProcessStep[];
+  requirements: AdmissionRequirement[];
+  importantDates: AdmissionImportantDate[];
+  contactInfo: {
+    phone: string;
+    email: string;
+    office: string;
+  };
+}
+
+const defaultAdmissionContent: AdmissionContent = {
+  title: 'Admission Process',
+  subtitle: 'Join ECR Academy - Your Gateway to Aviation Excellence',
+  description:
+    'Our admission process is designed to be simple and transparent. Follow the steps below to begin your journey with us.',
+  process: [
+    {
+      step: 1,
+      title: 'Fill Application',
+      description: 'Complete the online application form with accurate details and upload required documents.',
+    },
+    {
+      step: 2,
+      title: 'Document Verification',
+      description: 'Our team will verify your documents and academic records within 2-3 working days.',
+    },
+    {
+      step: 3,
+      title: 'Fee Payment',
+      description: 'Pay the admission fee online or at our campus. Educational loans available.',
+    },
+    {
+      step: 4,
+      title: 'Start Learning',
+      description: 'Receive your admission confirmation and begin your journey at ECR Academy.',
+    },
+  ],
+  requirements: [
+    {
+      category: 'Eligibility Criteria',
+      items: [
+        'Minimum 50% marks in 10+2 for undergraduate programs',
+        'Science stream mandatory for Nursing and Paramedical courses',
+        'Age limit varies by course (typically 17-25 years)',
+        'Valid ID proof and academic documents required',
+        'Entrance exam may be required for certain programs',
+      ],
+    },
+    {
+      category: 'Documents Required',
+      items: [
+        '10th & 12th Mark Sheets',
+        'Transfer Certificate',
+        'Migration Certificate',
+        'Passport Size Photos (8 copies)',
+        'Aadhar Card Copy',
+        'Income Certificate (for scholarship)',
+        'Caste Certificate (if applicable)',
+        'Medical Fitness Certificate',
+      ],
+    },
+  ],
+  importantDates: [
+    {
+      event: 'Admission Start',
+      date: '2024-01-15',
+      description: 'Online applications open',
+    },
+    {
+      event: 'Last Date for Application',
+      date: '2024-05-31',
+      description: 'Submission deadline',
+    },
+    {
+      event: 'Counseling Begins',
+      date: '2024-06-01',
+      description: 'Counseling sessions start',
+    },
+  ],
+  contactInfo: {
+    phone: '+91 82777 55777',
+    email: 'admission@ecredu.com',
+    office: 'Admission Office, ECR Campus, Mangalore',
+  },
+};
 
 const Admission = () => {
+  const [admissionContent, setAdmissionContent] = useState<AdmissionContent>(defaultAdmissionContent);
+
+  useEffect(() => {
+    const loadAdmissionContent = async () => {
+      try {
+        const settings = await settingsAPI.getGroupPublic('admission');
+        const admissionSetting = Array.isArray(settings)
+          ? settings.find((s: any) => s.key === 'admission.content' && s.value)
+          : null;
+
+        if (admissionSetting?.value) {
+          const parsed = JSON.parse(admissionSetting.value as string);
+          setAdmissionContent((prev) => ({
+            ...prev,
+            ...parsed,
+            process: Array.isArray(parsed?.process) && parsed.process.length ? parsed.process : prev.process,
+            requirements:
+              Array.isArray(parsed?.requirements) && parsed.requirements.length ? parsed.requirements : prev.requirements,
+            importantDates:
+              Array.isArray(parsed?.importantDates) && parsed.importantDates.length
+                ? parsed.importantDates
+                : prev.importantDates,
+            contactInfo: parsed?.contactInfo ? { ...prev.contactInfo, ...parsed.contactInfo } : prev.contactInfo,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load public admission content', error);
+      }
+    };
+
+    loadAdmissionContent();
+  }, []);
+
+  const formattedProcess = useMemo(() => {
+    return admissionContent.process.map((step, index) => ({
+      ...step,
+      icon: [FileText, Calendar, CreditCard, GraduationCap][index] ?? FileText,
+    }));
+  }, [admissionContent.process]);
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -56,10 +163,10 @@ const Admission = () => {
               Admissions Open
             </span>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-              Begin Your Journey Today
+              {admissionContent.title}
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl mb-8">
-              Join India's leading Aviation & Healthcare institute. Simple admission process with educational loan support.
+              {admissionContent.subtitle}
             </p>
             <Link to="/apply">
               <Button variant="hero" size="lg">
@@ -78,10 +185,10 @@ const Admission = () => {
             Admission Process
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {admissionSteps.map((step, index) => (
+            {formattedProcess.map((step, index) => (
               <div key={step.title} className="relative">
                 {/* Connector Line */}
-                {index < admissionSteps.length - 1 && (
+                {index < formattedProcess.length - 1 && (
                   <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-border -translate-x-1/2 z-0" />
                 )}
                 <div className="ecr-card text-center relative z-10">
@@ -89,13 +196,20 @@ const Admission = () => {
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
                     {index + 1}
                   </div>
-                  <div className="w-14 h-14 mx-auto mb-4 mt-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <step.icon className="w-7 h-7 text-primary" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Phone:</span>
+                      <p className="text-muted-foreground">{admissionContent.contactInfo.phone}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Email:</span>
+                      <p className="text-muted-foreground">{admissionContent.contactInfo.email}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Office:</span>
+                      <p className="text-muted-foreground">{admissionContent.contactInfo.office}</p>
+                    </div>
                   </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-2">
-                    {step.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -108,34 +222,26 @@ const Admission = () => {
         <div className="ecr-container">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Eligibility */}
-            <div className="bg-card rounded-3xl p-8 border border-border">
-              <h3 className="font-display text-2xl font-bold text-foreground mb-6">
-                Eligibility Criteria
-              </h3>
-              <ul className="space-y-4">
-                {eligibility.map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Documents */}
-            <div className="bg-card rounded-3xl p-8 border border-border">
-              <h3 className="font-display text-2xl font-bold text-foreground mb-6">
-                Required Documents
-              </h3>
-              <ul className="grid grid-cols-2 gap-4">
-                {documents.map((doc) => (
-                  <li key={doc} className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground text-sm">{doc}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {admissionContent.requirements.slice(0, 2).map((requirement) => (
+              <div key={requirement.category} className="bg-card rounded-3xl p-8 border border-border">
+                <h3 className="font-display text-2xl font-bold text-foreground mb-6">
+                  {requirement.category}
+                </h3>
+                <div className="space-y-2">
+                  {admissionContent.importantDates.map((date) => (
+                    <div key={`${date.event}-${date.date}`} className="flex justify-between items-center border-b pb-2">
+                      <div>
+                        <h5 className="font-medium">{date.event}</h5>
+                        <p className="text-sm text-muted-foreground">{date.description}</p>
+                      </div>
+                      <div className="text-sm font-medium text-primary">
+                        {date.date ? new Date(date.date).toLocaleDateString() : 'TBA'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

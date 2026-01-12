@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Save, Phone, Mail, MapPin, Clock } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
 interface ContactData {
   title: string;
@@ -40,10 +41,62 @@ const ContactEditor = () => {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [settingId, setSettingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    console.log('Saving contact data:', contactData);
-    setIsEditing(false);
+  useEffect(() => {
+    const loadContact = async () => {
+      setLoading(true);
+      try {
+        const setting = await settingsAPI.getByKey('contact.info');
+        if (setting?.value) {
+          setSettingId(String(setting.id));
+          const parsed = JSON.parse(setting.value);
+          setContactData(prev => ({
+            ...prev,
+            ...parsed,
+            socialMedia: parsed.socialMedia ? { ...prev.socialMedia, ...parsed.socialMedia } : prev.socialMedia,
+          }));
+        }
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          setError(err.message || 'Failed to load contact settings.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContact();
+  }, []);
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      const payload = contactData;
+      if (settingId) {
+        await settingsAPI.update(settingId, {
+          value: JSON.stringify(payload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'contact.info',
+          value: JSON.stringify(payload),
+          type: 'json',
+          group: 'contact',
+          description: 'Contact page information',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setSettingId(String(newId));
+        }
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save contact info.');
+    }
   };
 
   const handleCancel = () => {
@@ -64,6 +117,20 @@ const ContactEditor = () => {
     }));
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            Contact Information
+          </CardTitle>
+          <CardDescription>Loading contact info…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -76,6 +143,7 @@ const ContactEditor = () => {
             <CardDescription>
               Update contact details, address, and social media links
             </CardDescription>
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
           <div className="flex gap-2">
             {isEditing ? (

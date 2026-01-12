@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Edit, Save, Plus, Trash2, Users, BookOpen, GraduationCap, Building2 } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
 interface StatItem {
   id: string;
@@ -14,19 +15,82 @@ interface StatItem {
   label: string;
 }
 
+const DEFAULT_STATS: StatItem[] = [
+  { id: '1', icon: 'Users', value: 150, suffix: '+', label: 'Teachers' },
+  { id: '2', icon: 'BookOpen', value: 20, suffix: '+', label: 'Courses' },
+  { id: '3', icon: 'GraduationCap', value: 7000, suffix: '+', label: 'Students' },
+  { id: '4', icon: 'Building2', value: 40, suffix: ' Acres', label: 'Campus' },
+];
+
 const StatsEditor = () => {
-  const [stats, setStats] = useState<StatItem[]>([
-    { id: '1', icon: 'Users', value: 150, suffix: '+', label: 'Teachers' },
-    { id: '2', icon: 'BookOpen', value: 20, suffix: '+', label: 'Courses' },
-    { id: '3', icon: 'GraduationCap', value: 7000, suffix: '+', label: 'Students' },
-    { id: '4', icon: 'Building2', value: 40, suffix: ' Acres', label: 'Campus' },
-  ]);
-
+  const [stats, setStats] = useState<StatItem[]>(DEFAULT_STATS);
+  const [settingId, setSettingId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    console.log('Saving stats data:', stats);
-    setIsEditing(false);
+  useEffect(() => {
+    const loadStats = async () => {
+      setLoading(true);
+      try {
+        const setting = await settingsAPI.getByKey('home.stats');
+        if (setting?.value) {
+          setSettingId(String(setting.id));
+          const parsed = JSON.parse(setting.value);
+          if (Array.isArray(parsed)) {
+            setStats(
+              parsed.map((item, index) => ({
+                id: item.id ?? String(index + 1),
+                icon: item.icon ?? 'Users',
+                value: Number(item.value) || 0,
+                suffix: item.suffix ?? '',
+                label: item.label ?? '',
+              }))
+            );
+          }
+        }
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          setError(err.message || 'Failed to load stats settings.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      const payload = stats.map((stat, index) => ({
+        ...stat,
+        id: stat.id ?? String(index + 1),
+      }));
+
+      if (settingId) {
+        await settingsAPI.update(settingId, {
+          value: JSON.stringify(payload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'home.stats',
+          value: JSON.stringify(payload),
+          type: 'json',
+          group: 'home',
+          description: 'Home statistics section',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setSettingId(String(newId));
+        }
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save stats.');
+    }
   };
 
   const handleCancel = () => {
@@ -58,6 +122,20 @@ const StatsEditor = () => {
     'Users', 'BookOpen', 'GraduationCap', 'Building2', 'Award', 'Target', 'Heart'
   ];
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            Statistics Section
+          </CardTitle>
+          <CardDescription>Loading stats…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -70,6 +148,7 @@ const StatsEditor = () => {
             <CardDescription>
               Manage the statistics displayed on the home page
             </CardDescription>
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
           <div className="flex gap-2">
             {isEditing ? (

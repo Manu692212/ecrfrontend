@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Save, Plus, Trash2 } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
 interface Testimonial {
   id: string;
@@ -39,10 +40,74 @@ const TestimonialsEditor = () => {
   ]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [settingId, setSettingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    console.log('Saving testimonials data:', testimonials);
-    setIsEditing(false);
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      setLoading(true);
+      try {
+        const setting = await settingsAPI.getByKey('home.testimonials');
+        if (setting?.value) {
+          setSettingId(String(setting.id));
+          const parsed = JSON.parse(setting.value);
+          if (Array.isArray(parsed)) {
+            setTestimonials(
+              parsed.map((item, index) => ({
+                id: item.id ?? String(index + 1),
+                name: item.name ?? '',
+                role: item.role ?? '',
+                company: item.company ?? '',
+                content: item.content ?? '',
+                rating: Number(item.rating) || 5,
+                image: item.image ?? '/placeholder.svg',
+              }))
+            );
+          }
+        }
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          setError(err.message || 'Failed to load testimonials.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTestimonials();
+  }, []);
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      const payload = testimonials.map((testimonial, index) => ({
+        ...testimonial,
+        id: testimonial.id ?? String(index + 1),
+      }));
+
+      if (settingId) {
+        await settingsAPI.update(settingId, {
+          value: JSON.stringify(payload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'home.testimonials',
+          value: JSON.stringify(payload),
+          type: 'json',
+          group: 'home',
+          description: 'Home testimonials',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setSettingId(String(newId));
+        }
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save testimonials.');
+    }
   };
 
   const handleCancel = () => {
@@ -72,6 +137,20 @@ const TestimonialsEditor = () => {
     setTestimonials(prev => prev.filter(testimonial => testimonial.id !== id));
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            Testimonials Management
+          </CardTitle>
+          <CardDescription>Loading testimonials…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -84,6 +163,7 @@ const TestimonialsEditor = () => {
             <CardDescription>
               Manage student testimonials and reviews
             </CardDescription>
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
           <div className="flex gap-2">
             {isEditing ? (

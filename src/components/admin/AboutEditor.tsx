@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Edit, Save, Plus, Trash2 } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
 interface AboutData {
   title: string;
@@ -65,10 +66,63 @@ const AboutEditor = () => {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [settingId, setSettingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    console.log('Saving about data:', aboutData);
-    setIsEditing(false);
+  useEffect(() => {
+    const loadAbout = async () => {
+      setLoading(true);
+      try {
+        const setting = await settingsAPI.getByKey('about.content');
+        if (setting?.value) {
+          setSettingId(String(setting.id));
+          const parsed = JSON.parse(setting.value);
+          setAboutData(prev => ({
+            ...prev,
+            ...parsed,
+            stats: parsed.stats ? { ...prev.stats, ...parsed.stats } : prev.stats,
+            socialMedia: parsed.socialMedia ?? prev?.socialMedia
+          }));
+        }
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          setError(err.message || 'Failed to load about settings.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAbout();
+  }, []);
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      const payload = aboutData;
+      if (settingId) {
+        await settingsAPI.update(settingId, {
+          value: JSON.stringify(payload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'about.content',
+          value: JSON.stringify(payload),
+          type: 'json',
+          group: 'about',
+          description: 'About page content blocks',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setSettingId(String(newId));
+        }
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save about content.');
+    }
   };
 
   const handleCancel = () => {
@@ -107,6 +161,20 @@ const AboutEditor = () => {
     updateField('values', aboutData.values.filter((_, i) => i !== index));
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            About Page Content
+          </CardTitle>
+          <CardDescription>Loading about content…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -119,6 +187,7 @@ const AboutEditor = () => {
             <CardDescription>
               Edit about page content, achievements, and core values
             </CardDescription>
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
           <div className="flex gap-2">
             {isEditing ? (

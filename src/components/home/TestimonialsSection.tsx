@@ -1,35 +1,88 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
-const testimonials = [
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company?: string;
+  content: string;
+  rating: number;
+  image?: string;
+}
+
+const defaultTestimonials: Testimonial[] = [
   {
+    id: '1',
     name: 'Merin Ann',
     role: 'Student',
-    content: 'Excellent, my mentor Roshmy is the best, helped me throughout the process. The guidance and support I received from the academy is appreciable. Thank you once again. God bless you all.',
-    avatar: 'MA',
+    content:
+      'Excellent, my mentor Roshmy is the best, helped me throughout the process. The guidance and support I received from the academy is appreciable. Thank you once again. God bless you all.',
+    rating: 5,
   },
   {
+    id: '2',
     name: 'Aparna',
     role: 'Student',
-    content: 'The Best Classes ever, I took the A1 German online mode of learning where we can schedule the class timings in our own convenience. The mentor and classes were awesome. I recommend academy to everyone.',
-    avatar: 'AP',
+    content:
+      'The Best Classes ever, I took the A1 German online mode of learning where we can schedule the class timings in our own convenience. The mentor and classes were awesome. I recommend academy to everyone.',
+    rating: 5,
   },
   {
+    id: '3',
     name: 'Elson Jacob',
     role: 'Student',
-    content: 'Best IELTS coaching centre in Kochi. Highly recommend for beginners to become a pro in English. Highly professional coaching and friendly teachers. Thank you Academy.',
-    avatar: 'EJ',
+    content:
+      'Best IELTS coaching centre in Kochi. Highly recommend for beginners to become a pro in English. Highly professional coaching and friendly teachers. Thank you Academy.',
+    rating: 5,
   },
   {
+    id: '4',
     name: 'Bismi Babu',
     role: 'Student',
-    content: 'Good experience with Academy. I got the classes according to my time preferences and convenience. I am happy and satisfied with the classes as well as the other services too.',
-    avatar: 'BB',
+    content:
+      'Good experience with Academy. I got the classes according to my time preferences and convenience. I am happy and satisfied with the classes as well as the other services too.',
+    rating: 5,
   },
 ];
 
 const TestimonialsSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(defaultTestimonials);
+
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      try {
+        const settings = await settingsAPI.getGroupPublic('home');
+        const testimonialsSetting = Array.isArray(settings)
+          ? settings.find((s: any) => s.key === 'home.testimonials' && s.value)
+          : null;
+
+        if (testimonialsSetting?.value) {
+          const parsed = JSON.parse(testimonialsSetting.value as string);
+          if (Array.isArray(parsed) && parsed.length) {
+            setTestimonials(
+              parsed.map((testimonial, index) => ({
+                id: testimonial.id ?? String(index + 1),
+                name: testimonial.name ?? '',
+                role: testimonial.role ?? '',
+                company: testimonial.company ?? '',
+                content: testimonial.content ?? '',
+                rating: Number(testimonial.rating) || 5,
+                image: testimonial.image,
+              }))
+            );
+            setCurrentIndex(0);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load public testimonials', error);
+      }
+    };
+
+    loadTestimonials();
+  }, []);
 
   const nextTestimonial = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
@@ -71,14 +124,24 @@ const TestimonialsSection = () => {
               {/* Avatar */}
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold-gradient flex items-center justify-center">
                 <span className="text-xl font-bold text-primary-foreground">
-                  {testimonials[currentIndex].avatar}
+                  {testimonials[currentIndex].name
+                    .split(' ')
+                    .map((n) => n.charAt(0))
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase()}
                 </span>
               </div>
 
               <h4 className="font-display text-xl font-semibold text-foreground">
                 {testimonials[currentIndex].name}
               </h4>
-              <p className="text-primary">{testimonials[currentIndex].role}</p>
+              <p className="text-primary">
+                {testimonials[currentIndex].role}
+                {testimonials[currentIndex].company
+                  ? ` • ${testimonials[currentIndex].company}`
+                  : ''}
+              </p>
             </div>
 
             {/* Navigation */}

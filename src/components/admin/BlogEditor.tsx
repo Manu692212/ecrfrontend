@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Save, Plus, Trash2 } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
 interface BlogPost {
   id: string;
@@ -45,10 +46,76 @@ const BlogEditor = () => {
   ]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [settingId, setSettingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    console.log('Saving blog data:', blogPosts);
-    setIsEditing(false);
+  useEffect(() => {
+    const loadBlogPosts = async () => {
+      setLoading(true);
+      try {
+        const setting = await settingsAPI.getByKey('home.blog');
+        if (setting?.value) {
+          setSettingId(String(setting.id));
+          const parsed = JSON.parse(setting.value);
+          if (Array.isArray(parsed)) {
+            setBlogPosts(
+              parsed.map((post, index) => ({
+                id: post.id ?? String(index + 1),
+                title: post.title ?? '',
+                excerpt: post.excerpt ?? '',
+                content: post.content ?? '',
+                author: post.author ?? '',
+                date: post.date ?? new Date().toISOString().split('T')[0],
+                category: post.category ?? '',
+                image: post.image ?? '/placeholder.svg',
+                featured: Boolean(post.featured),
+              }))
+            );
+          }
+        }
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          setError(err.message || 'Failed to load blog posts.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBlogPosts();
+  }, []);
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      const payload = blogPosts.map((post, index) => ({
+        ...post,
+        id: post.id ?? String(index + 1),
+      }));
+
+      if (settingId) {
+        await settingsAPI.update(settingId, {
+          value: JSON.stringify(payload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'home.blog',
+          value: JSON.stringify(payload),
+          type: 'json',
+          group: 'home',
+          description: 'Home blog posts',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setSettingId(String(newId));
+        }
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save blog posts.');
+    }
   };
 
   const handleCancel = () => {
@@ -82,6 +149,20 @@ const BlogEditor = () => {
 
   const categories = ['Career Guidance', 'Program Highlights', 'Industry News', 'Student Success', 'Events'];
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            Blog Management
+          </CardTitle>
+          <CardDescription>Loading blog posts…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -94,6 +175,7 @@ const BlogEditor = () => {
             <CardDescription>
               Manage blog posts, articles, and news updates
             </CardDescription>
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
           <div className="flex gap-2">
             {isEditing ? (

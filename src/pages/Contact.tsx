@@ -1,37 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MapPin, Mail, Phone, Clock, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { settingsAPI } from '@/lib/api';
 
-const contactInfo = [
-  {
-    icon: MapPin,
-    title: 'Our Address',
-    content: 'Madhuvana, Achalady, Brahmavar Tq, Udupi, Karnataka, Pin - 576225',
-  },
-  {
-    icon: Mail,
-    title: 'Email Us',
-    content: 'admission@ecredu.com',
-    link: 'mailto:admission@ecredu.com',
-  },
-  {
-    icon: Phone,
-    title: 'Call Us',
-    content: '+91 82777 55777',
-    subContent: '+91 88677 12266',
-    link: 'tel:+918277755777',
-  },
-  {
-    icon: Clock,
-    title: 'Office Hours',
-    content: 'Mon - Sat: 9:00 AM - 6:00 PM',
-    subContent: 'Sunday: Closed',
-  },
-];
+interface ContactContent {
+  title: string;
+  subtitle: string;
+  address: string;
+  phone: string;
+  altPhone?: string;
+  email: string;
+  workingHours: string;
+  mapEmbed?: string;
+  socialMedia: {
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
+  };
+}
+
+const defaultContact: ContactContent = {
+  title: 'Get in Touch',
+  subtitle: 'We are here to help you with admissions, programs, and campus visits.',
+  address: 'Madhuvana, Achalady, Brahmavar Tq, Udupi, Karnataka, Pin - 576225',
+  phone: '+91 82777 55777',
+  altPhone: '+91 88677 12266',
+  email: 'admission@ecredu.com',
+  workingHours: 'Mon - Sat: 9:00 AM - 6:00 PM',
+  mapEmbed: '',
+  socialMedia: {},
+};
 
 const Contact = () => {
   const { toast } = useToast();
@@ -42,6 +45,57 @@ const Contact = () => {
     subject: '',
     message: '',
   });
+  const [contactContent, setContactContent] = useState<ContactContent>(defaultContact);
+
+  useEffect(() => {
+    const loadContactContent = async () => {
+      try {
+        const settings = await settingsAPI.getGroupPublic('contact');
+        const contactSetting = Array.isArray(settings)
+          ? settings.find((s: any) => s.key === 'contact.info' && s.value)
+          : null;
+
+        if (contactSetting?.value) {
+          const parsed = JSON.parse(contactSetting.value as string);
+          setContactContent((prev) => ({
+            ...prev,
+            ...parsed,
+            socialMedia: parsed?.socialMedia ? { ...prev.socialMedia, ...parsed.socialMedia } : prev.socialMedia,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load public contact info', error);
+      }
+    };
+
+    loadContactContent();
+  }, []);
+
+  const contactInfo = [
+    {
+      icon: MapPin,
+      title: 'Our Address',
+      content: contactContent.address,
+    },
+    {
+      icon: Mail,
+      title: 'Email Us',
+      content: contactContent.email,
+      link: `mailto:${contactContent.email}`,
+    },
+    {
+      icon: Phone,
+      title: 'Call Us',
+      content: contactContent.phone,
+      subContent: contactContent.altPhone,
+      link: `tel:${contactContent.phone}`,
+    },
+    {
+      icon: Clock,
+      title: 'Office Hours',
+      content: contactContent.workingHours,
+    },
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +116,10 @@ const Contact = () => {
               Get in Touch
             </span>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-              Contact Us
+              {contactContent.title}
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl">
-              Have questions? We're here to help. Reach out to us anytime.
+              {contactContent.subtitle}
             </p>
           </div>
         </div>
@@ -158,17 +212,51 @@ const Contact = () => {
 
             {/* Map Placeholder */}
             <div className="bg-card rounded-3xl border border-border overflow-hidden">
-              <div className="h-full min-h-[400px] bg-gradient-to-br from-secondary to-muted flex items-center justify-center">
-                <div className="text-center p-8">
-                  <MapPin className="w-16 h-16 text-primary mx-auto mb-4" />
-                  <h3 className="font-display text-xl font-semibold text-foreground mb-2">
-                    Visit Our Campus
-                  </h3>
-                  <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                    Madhuvana, Achalady, Brahmavar Tq, Udupi, Karnataka, Pin - 576225
-                  </p>
+              {contactContent.mapEmbed ? (
+                <div
+                  className="min-h-[400px]"
+                  dangerouslySetInnerHTML={{ __html: contactContent.mapEmbed }}
+                />
+              ) : (
+                <div className="h-full min-h-[400px] bg-gradient-to-br from-secondary to-muted flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <MapPin className="w-16 h-16 text-primary mx-auto mb-4" />
+                    <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+                      Visit Our Campus
+                    </h3>
+                    <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                      {contactContent.address}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
+              {(contactContent.socialMedia.facebook ||
+                contactContent.socialMedia.twitter ||
+                contactContent.socialMedia.linkedin ||
+                contactContent.socialMedia.instagram) && (
+                <div className="border-t border-border px-6 py-4 flex flex-wrap gap-4 text-sm">
+                  {contactContent.socialMedia.facebook && (
+                    <a href={contactContent.socialMedia.facebook} className="text-primary hover:underline">
+                      Facebook
+                    </a>
+                  )}
+                  {contactContent.socialMedia.twitter && (
+                    <a href={contactContent.socialMedia.twitter} className="text-primary hover:underline">
+                      Twitter
+                    </a>
+                  )}
+                  {contactContent.socialMedia.linkedin && (
+                    <a href={contactContent.socialMedia.linkedin} className="text-primary hover:underline">
+                      LinkedIn
+                    </a>
+                  )}
+                  {contactContent.socialMedia.instagram && (
+                    <a href={contactContent.socialMedia.instagram} className="text-primary hover:underline">
+                      Instagram
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

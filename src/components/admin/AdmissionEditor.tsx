@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Save, Plus, Trash2 } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
 interface AdmissionData {
   title: string;
@@ -103,10 +104,65 @@ const AdmissionEditor = () => {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [settingId, setSettingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    console.log('Saving admission data:', admissionData);
-    setIsEditing(false);
+  useEffect(() => {
+    const loadAdmission = async () => {
+      setLoading(true);
+      try {
+        const setting = await settingsAPI.getByKey('admission.content');
+        if (setting?.value) {
+          setSettingId(String(setting.id));
+          const parsed = JSON.parse(setting.value);
+          setAdmissionData(prev => ({
+            ...prev,
+            ...parsed,
+            process: Array.isArray(parsed?.process) ? parsed.process : prev.process,
+            requirements: Array.isArray(parsed?.requirements) ? parsed.requirements : prev.requirements,
+            importantDates: Array.isArray(parsed?.importantDates) ? parsed.importantDates : prev.importantDates,
+            contactInfo: parsed?.contactInfo ? { ...prev.contactInfo, ...parsed.contactInfo } : prev.contactInfo,
+          }));
+        }
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          setError(err.message || 'Failed to load admission content.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAdmission();
+  }, []);
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      const payload = admissionData;
+      if (settingId) {
+        await settingsAPI.update(settingId, {
+          value: JSON.stringify(payload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'admission.content',
+          value: JSON.stringify(payload),
+          type: 'json',
+          group: 'admission',
+          description: 'Admission page content',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setSettingId(String(newId));
+        }
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save admission content.');
+    }
   };
 
   const handleCancel = () => {
@@ -200,6 +256,20 @@ const AdmissionEditor = () => {
     updateField('importantDates', admissionData.importantDates.filter((_, i) => i !== index));
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            Admission Management
+          </CardTitle>
+          <CardDescription>Loading admission content…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -212,6 +282,7 @@ const AdmissionEditor = () => {
             <CardDescription>
               Manage admission process, requirements, and important dates
             </CardDescription>
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
           <div className="flex gap-2">
             {isEditing ? (

@@ -1,44 +1,58 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Clock, MapPin, ArrowRight, Users, Award, TrendingUp } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
-const jobOpenings = [
+interface JobOpening {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  experience: string;
+  salary: string;
+  description: string;
+  requirements: string[];
+  deadline: string;
+  active: boolean;
+}
+
+const DEFAULT_JOBS: JobOpening[] = [
   {
-    id: 1,
+    id: '1',
     title: 'Assistant Professor - Aviation Management',
     department: 'Aviation Studies',
     type: 'Full-time',
     location: 'Udupi Campus',
     experience: '3-5 years',
-    qualification: 'PhD/M.Tech in Aviation or related field',
+    salary: '₹10-14 LPA',
+    description: 'Lead the Aviation department with engaging lectures and hands-on training.',
+    requirements: [
+      'PhD/M.Tech in Aviation or related field',
+      'Minimum 3 years of teaching experience',
+      'Industry exposure preferred',
+    ],
+    deadline: '2024-05-31',
+    active: true,
   },
   {
-    id: 2,
-    title: 'Lab Technician - Nursing Department',
-    department: 'Nursing',
-    type: 'Full-time',
-    location: 'Udupi Campus',
-    experience: '2-3 years',
-    qualification: 'BSc in relevant field',
-  },
-  {
-    id: 3,
+    id: '2',
     title: 'Digital Marketing Trainer',
     department: 'Management Studies',
     type: 'Full-time',
-    location: 'Udupi Campus',
+    location: 'Mangalore Campus',
     experience: '4+ years',
-    qualification: 'MBA with Digital Marketing certification',
-  },
-  {
-    id: 4,
-    title: 'Administrative Executive',
-    department: 'Administration',
-    type: 'Full-time',
-    location: 'Udupi Campus',
-    experience: '1-2 years',
-    qualification: 'Bachelor\'s degree in any field',
+    salary: '₹8-12 LPA',
+    description: 'Guide students through the latest digital marketing tactics and tools.',
+    requirements: [
+      'MBA with Digital Marketing specialization',
+      'Hands-on experience with campaigns',
+      'Strong communication skills',
+    ],
+    deadline: '2024-06-15',
+    active: true,
   },
 ];
 
@@ -92,6 +106,48 @@ const benefits = [
 ];
 
 const Careers = () => {
+  const [jobOpenings, setJobOpenings] = useState<JobOpening[]>(DEFAULT_JOBS);
+
+  useEffect(() => {
+    const loadCareers = async () => {
+      try {
+        const settings = await settingsAPI.getGroupPublic('careers');
+        const careersSetting = Array.isArray(settings)
+          ? settings.find((s: any) => s.key === 'careers.openings' && s.value)
+          : null;
+
+        if (careersSetting?.value) {
+          const parsed = JSON.parse(careersSetting.value as string);
+          if (Array.isArray(parsed) && parsed.length) {
+            setJobOpenings(
+              parsed
+                .filter((job) => job.active !== false)
+                .map((job, index) => ({
+                  id: job.id ?? String(index + 1),
+                  title: job.title ?? '',
+                  department: job.department ?? '',
+                  location: job.location ?? '',
+                  type: job.type ?? 'Full-time',
+                  experience: job.experience ?? '',
+                  salary: job.salary ?? '',
+                  description: job.description ?? '',
+                  requirements: Array.isArray(job.requirements) ? job.requirements : [],
+                  deadline: job.deadline ?? '',
+                  active: job.active ?? true,
+                }))
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load public careers data', error);
+      }
+    };
+
+    loadCareers();
+  }, []);
+
+  const activeJobs = useMemo(() => jobOpenings.filter((job) => job.active !== false), [jobOpenings]);
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -137,7 +193,7 @@ const Careers = () => {
             Current Openings
           </h2>
           <div className="space-y-6">
-            {jobOpenings.map((job) => (
+            {activeJobs.map((job) => (
               <div key={job.id} className="ecr-card">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                   <div>
@@ -159,8 +215,32 @@ const Careers = () => {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-2">
-                      <strong>Experience:</strong> {job.experience} | <strong>Qualification:</strong> {job.qualification}
+                      <strong>Experience:</strong> {job.experience}
+                      {job.salary ? (
+                        <>
+                          {' '}
+                          | <strong>Salary:</strong> {job.salary}
+                        </>
+                      ) : null}
                     </p>
+                    {job.description && (
+                      <p className="text-muted-foreground text-sm mt-2">{job.description}</p>
+                    )}
+                    {job.requirements.length > 0 && (
+                      <ul className="mt-3 list-disc list-inside text-sm text-muted-foreground space-y-1">
+                        {job.requirements.slice(0, 3).map((req) => (
+                          <li key={req}>{req}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {job.deadline && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Deadline:{' '}
+                        <span className="font-medium text-primary">
+                          {new Date(job.deadline).toLocaleDateString()}
+                        </span>
+                      </p>
+                    )}
                   </div>
                   <Link to="/apply?type=career">
                     <Button variant="outline">

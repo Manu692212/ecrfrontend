@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
 import Login from '@/pages/admin/Login';
-import Dashboard from '@/pages/admin/Dashboard';
 import CoursesPage from '@/pages/admin/courses';
 import AcademicCouncilPage from '@/pages/admin/academic-council';
 import ManagementPage from '@/pages/admin/management';
@@ -21,8 +20,7 @@ function AdminDashboard() {
   return (
     <AdminLayout>
       <Routes>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<AdminHomePage />} />
         <Route path="about" element={<AdminAboutPage />} />
         <Route path="admission" element={<AdminAdmissionPage />} />
@@ -44,7 +42,7 @@ function AdminDashboard() {
         <Route path="settings/users" element={<AdminUsersPage />} />
         
         {/* Add more protected routes here */}
-        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/admin/home" replace />} />
       </Routes>
     </AdminLayout>
   );

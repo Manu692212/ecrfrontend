@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Menu, X } from 'lucide-react';
 
 const menuItems = [
-  { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
   { name: 'Home Page', path: '/admin/home', icon: '🏠' },
   { name: 'About Page', path: '/admin/about', icon: 'ℹ️' },
   { name: 'Courses', path: '/admin/courses', icon: '📚' },

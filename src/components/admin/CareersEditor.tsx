@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Save, Plus, Trash2 } from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
 
 interface JobOpening {
   id: string;
@@ -61,10 +62,79 @@ const CareersEditor = () => {
   ]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [settingId, setSettingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    console.log('Saving careers data:', jobOpenings);
-    setIsEditing(false);
+  useEffect(() => {
+    const loadCareers = async () => {
+      setLoading(true);
+      try {
+        const setting = await settingsAPI.getByKey('careers.openings');
+        if (setting?.value) {
+          setSettingId(String(setting.id));
+          const parsed = JSON.parse(setting.value);
+          if (Array.isArray(parsed)) {
+            setJobOpenings(
+              parsed.map((job, index) => ({
+                id: job.id ?? String(index + 1),
+                title: job.title ?? '',
+                department: job.department ?? '',
+                location: job.location ?? '',
+                type: job.type ?? 'Full-time',
+                experience: job.experience ?? '',
+                salary: job.salary ?? '',
+                description: job.description ?? '',
+                requirements: Array.isArray(job.requirements) ? job.requirements : [''],
+                deadline: job.deadline ?? '',
+                active: job.active ?? true,
+              }))
+            );
+          }
+        }
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          setError(err.message || 'Failed to load job openings.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCareers();
+  }, []);
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      const payload = jobOpenings.map((job, index) => ({
+        ...job,
+        id: job.id ?? String(index + 1),
+      }));
+
+      if (settingId) {
+        await settingsAPI.update(settingId, {
+          value: JSON.stringify(payload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'careers.openings',
+          value: JSON.stringify(payload),
+          type: 'json',
+          group: 'careers',
+          description: 'Careers page job listings',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setSettingId(String(newId));
+        }
+      }
+
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save job openings.');
+    }
   };
 
   const handleCancel = () => {
@@ -130,6 +200,20 @@ const CareersEditor = () => {
   const departments = ['Academics', 'Administration', 'Marketing', 'IT', 'Finance', 'HR'];
   const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            Careers Management
+          </CardTitle>
+          <CardDescription>Loading job openings…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -142,6 +226,7 @@ const CareersEditor = () => {
             <CardDescription>
               Manage job openings and career opportunities
             </CardDescription>
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
           <div className="flex gap-2">
             {isEditing ? (
