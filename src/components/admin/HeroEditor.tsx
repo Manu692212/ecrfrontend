@@ -64,7 +64,10 @@ const HeroEditor = () => {
         const updated = await settingsAPI.update(settingId, {
           value: JSON.stringify(heroData),
         });
-        setSettingId(String(updated.id ?? settingId));
+        const updatedId = updated?.setting?.id ?? updated?.id ?? settingId;
+        if (updatedId) {
+          setSettingId(String(updatedId));
+        }
       } else {
         const created = await settingsAPI.create({
           key: 'home.hero',
@@ -74,7 +77,7 @@ const HeroEditor = () => {
           description: 'Home hero section content',
           is_public: true,
         });
-        const newId = created.setting?.id ?? created.id;
+        const newId = created?.setting?.id ?? created?.id ?? created?.data?.id;
         if (newId) {
           setSettingId(String(newId));
         }

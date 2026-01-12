@@ -494,19 +494,19 @@ export const settingsAPI = {
   },
   getGroup: async (group: string) => {
     const response = await api.get(`/settings/group/${group}`);
-    return response.data;
+    return response?.data ?? response;
   },
   getAll: async (page = 1) => {
     const response = await api.get(`/settings?page=${page}`);
-    return response.data;
+    return response?.data ?? response;
   },
   create: async (data: any) => {
     const response = await api.post('/settings', data);
-    return response.data;
+    return response?.data ?? response;
   },
   update: async (id: string | number, data: any) => {
     const response = await api.put(`/settings/${id}`, data);
-    return response.data;
+    return response?.data ?? response;
   },
 };
 
