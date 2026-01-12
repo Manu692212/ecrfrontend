@@ -47,6 +47,7 @@ const API_BASE_URL = resolveApiBaseUrl();
 type RequestOptions = {
   headers?: Record<string, string>;
   responseType?: 'json' | 'blob' | 'text';
+  skipErrorStatuses?: number[];
 };
 
 type ExtendedRequestOptions = RequestOptions & {
@@ -74,7 +75,12 @@ const buildPayload = (payload: any) => {
 };
 
 const request = async (method: string, url: string, options: ExtendedRequestOptions = {}) => {
-  const { body, headers = {}, responseType = 'json' } = options;
+  const {
+    body,
+    headers = {},
+    responseType = 'json',
+    skipErrorStatuses = [],
+  } = options;
   const token = getAuthToken();
 
   const mergedHeaders: Record<string, string> = {
@@ -120,6 +126,18 @@ const request = async (method: string, url: string, options: ExtendedRequestOpti
   }
 
   if (!response.ok) {
+    if (skipErrorStatuses.includes(response.status)) {
+      if (responseType === 'blob') {
+        return null;
+      }
+
+      if (responseType === 'text') {
+        return '';
+      }
+
+      return null;
+    }
+
     const errorText = await response.text();
     let errorMessage = response.statusText;
     if (errorText) {
@@ -453,12 +471,26 @@ export const facilitiesAPI = {
 
 export const settingsAPI = {
   getGroupPublic: async (group: string) => {
-    const response = await api.get(`/public/settings/group/${group}`);
-    return response.data;
+    const response = await api.get(`/public/settings/group/${group}`, {
+      skipErrorStatuses: [404],
+    });
+
+    if (!response) {
+      return [];
+    }
+
+    return response.data ?? response;
   },
   getByKey: async (key: string) => {
-    const response = await api.get(`/settings/key/${key}`);
-    return response.data;
+    const response = await api.get(`/settings/key/${key}`, {
+      skipErrorStatuses: [404],
+    });
+
+    if (!response) {
+      return null;
+    }
+
+    return response.data ?? response;
   },
   getGroup: async (group: string) => {
     const response = await api.get(`/settings/group/${group}`);
