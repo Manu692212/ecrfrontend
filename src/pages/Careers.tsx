@@ -4,88 +4,14 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Clock, MapPin, ArrowRight, Users, Award, TrendingUp } from 'lucide-react';
 import { settingsAPI } from '@/lib/api';
-
-interface JobOpening {
-  id: string;
-  title: string;
-  department: string;
-  location: string;
-  type: string;
-  experience: string;
-  salary: string;
-  description: string;
-  requirements: string[];
-  deadline: string;
-  active: boolean;
-}
-
-const DEFAULT_JOBS: JobOpening[] = [
-  {
-    id: '1',
-    title: 'Assistant Professor - Aviation Management',
-    department: 'Aviation Studies',
-    type: 'Full-time',
-    location: 'Udupi Campus',
-    experience: '3-5 years',
-    salary: '₹10-14 LPA',
-    description: 'Lead the Aviation department with engaging lectures and hands-on training.',
-    requirements: [
-      'PhD/M.Tech in Aviation or related field',
-      'Minimum 3 years of teaching experience',
-      'Industry exposure preferred',
-    ],
-    deadline: '2024-05-31',
-    active: true,
-  },
-  {
-    id: '2',
-    title: 'Digital Marketing Trainer',
-    department: 'Management Studies',
-    type: 'Full-time',
-    location: 'Mangalore Campus',
-    experience: '4+ years',
-    salary: '₹8-12 LPA',
-    description: 'Guide students through the latest digital marketing tactics and tools.',
-    requirements: [
-      'MBA with Digital Marketing specialization',
-      'Hands-on experience with campaigns',
-      'Strong communication skills',
-    ],
-    deadline: '2024-06-15',
-    active: true,
-  },
-];
-
-const partTimeJobs = [
-  {
-    id: 1,
-    title: 'HR Intern',
-    description: 'Support HR activities and learn recruitment processes.',
-    stipend: '₹5,000 - ₹8,000/month',
-    duration: '6 months',
-  },
-  {
-    id: 2,
-    title: 'Finance Assistant',
-    description: 'Assist in accounting, billing, and financial documentation.',
-    stipend: '₹6,000 - ₹10,000/month',
-    duration: '6-12 months',
-  },
-  {
-    id: 3,
-    title: 'Event Management Coordinator',
-    description: 'Help organize campus events, seminars, and cultural programs.',
-    stipend: '₹5,000 - ₹8,000/month',
-    duration: 'Flexible',
-  },
-  {
-    id: 4,
-    title: 'Marketing Executive (Part-time)',
-    description: 'Support marketing campaigns and social media management.',
-    stipend: '₹7,000 - ₹12,000/month',
-    duration: 'Ongoing',
-  },
-];
+import {
+  DEFAULT_JOB_OPENINGS,
+  DEFAULT_PART_TIME_JOBS,
+  JobOpening,
+  PartTimeJob,
+  normalizeJobOpenings,
+  normalizePartTimeJobs,
+} from '@/data/careers';
 
 const benefits = [
   {
@@ -106,7 +32,8 @@ const benefits = [
 ];
 
 const Careers = () => {
-  const [jobOpenings, setJobOpenings] = useState<JobOpening[]>(DEFAULT_JOBS);
+  const [jobOpenings, setJobOpenings] = useState<JobOpening[]>(DEFAULT_JOB_OPENINGS);
+  const [partTimeJobs, setPartTimeJobs] = useState<PartTimeJob[]>(DEFAULT_PART_TIME_JOBS);
 
   useEffect(() => {
     const loadCareers = async () => {
@@ -115,31 +42,37 @@ const Careers = () => {
         const careersSetting = Array.isArray(settings)
           ? settings.find((s: any) => s.key === 'careers.openings' && s.value)
           : null;
+        const partTimeSetting = Array.isArray(settings)
+          ? settings.find((s: any) => s.key === 'careers.part_time' && s.value)
+          : null;
 
         if (careersSetting?.value) {
           const parsed = JSON.parse(careersSetting.value as string);
-          if (Array.isArray(parsed) && parsed.length) {
-            setJobOpenings(
-              parsed
-                .filter((job) => job.active !== false)
-                .map((job, index) => ({
-                  id: job.id ?? String(index + 1),
-                  title: job.title ?? '',
-                  department: job.department ?? '',
-                  location: job.location ?? '',
-                  type: job.type ?? 'Full-time',
-                  experience: job.experience ?? '',
-                  salary: job.salary ?? '',
-                  description: job.description ?? '',
-                  requirements: Array.isArray(job.requirements) ? job.requirements : [],
-                  deadline: job.deadline ?? '',
-                  active: job.active ?? true,
-                }))
-            );
+          const normalized = normalizeJobOpenings(parsed, { includeInactive: false });
+          if (normalized.length) {
+            setJobOpenings(normalized);
+          } else {
+            setJobOpenings(DEFAULT_JOB_OPENINGS);
           }
+        } else {
+          setJobOpenings(DEFAULT_JOB_OPENINGS);
+        }
+
+        if (partTimeSetting?.value) {
+          const parsed = JSON.parse(partTimeSetting.value as string);
+          const normalized = normalizePartTimeJobs(parsed, { includeInactive: false });
+          if (normalized.length) {
+            setPartTimeJobs(normalized);
+          } else {
+            setPartTimeJobs(DEFAULT_PART_TIME_JOBS);
+          }
+        } else {
+          setPartTimeJobs(DEFAULT_PART_TIME_JOBS);
         }
       } catch (error) {
         console.error('Failed to load public careers data', error);
+        setJobOpenings(DEFAULT_JOB_OPENINGS);
+        setPartTimeJobs(DEFAULT_PART_TIME_JOBS);
       }
     };
 
@@ -147,6 +80,7 @@ const Careers = () => {
   }, []);
 
   const activeJobs = useMemo(() => jobOpenings.filter((job) => job.active !== false), [jobOpenings]);
+  const activePartTimeJobs = useMemo(() => partTimeJobs.filter((job) => job.active !== false), [partTimeJobs]);
 
   return (
     <Layout>
@@ -182,6 +116,11 @@ const Careers = () => {
                 </div>
               </div>
             ))}
+            {activePartTimeJobs.length === 0 && (
+              <div className="bg-background/60 rounded-2xl p-6 border border-border text-center text-muted-foreground">
+                No part-time opportunities available right now. Check back soon!
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -272,7 +211,7 @@ const Careers = () => {
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
-            {partTimeJobs.map((job) => (
+            {activePartTimeJobs.map((job) => (
               <div key={job.id} className="bg-background rounded-2xl p-6 border border-border">
                 <h3 className="font-display text-lg font-semibold text-foreground mb-2">
                   {job.title}

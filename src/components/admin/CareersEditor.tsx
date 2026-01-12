@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,109 +6,85 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Save, Plus, Trash2 } from 'lucide-react';
 import { settingsAPI } from '@/lib/api';
-
-interface JobOpening {
-  id: string;
-  title: string;
-  department: string;
-  location: string;
-  type: string;
-  experience: string;
-  salary: string;
-  description: string;
-  requirements: string[];
-  deadline: string;
-  active: boolean;
-}
+import {
+  DEFAULT_JOB_OPENINGS,
+  JobOpening,
+  createEmptyJobOpening,
+  normalizeJobOpenings,
+  prepareJobOpeningsForSave,
+  DEFAULT_PART_TIME_JOBS,
+  PartTimeJob,
+  createEmptyPartTimeJob,
+  normalizePartTimeJobs,
+  preparePartTimeJobsForSave,
+} from '@/data/careers';
 
 const CareersEditor = () => {
-  const [jobOpenings, setJobOpenings] = useState<JobOpening[]>([
-    {
-      id: '1',
-      title: 'Assistant Professor - Aviation Management',
-      department: 'Aviation Studies',
-      location: 'Udupi Campus',
-      type: 'Full-time',
-      experience: '3-5 years',
-      salary: '₹10-14 LPA',
-      description: 'Lead the Aviation department with engaging lectures and hands-on training.',
-      requirements: [
-        'PhD/M.Tech in Aviation or related field',
-        'Minimum 3 years of teaching experience',
-        'Industry exposure preferred',
-      ],
-      deadline: '2024-05-31',
-      active: true,
-    },
-    {
-      id: '2',
-      title: 'Digital Marketing Trainer',
-      department: 'Management Studies',
-      location: 'Mangalore Campus',
-      type: 'Full-time',
-      experience: '4+ years',
-      salary: '₹8-12 LPA',
-      description: 'Guide students through the latest digital marketing tactics and tools.',
-      requirements: [
-        'MBA with Digital Marketing specialization',
-        'Hands-on experience with campaigns',
-        'Strong communication skills',
-      ],
-      deadline: '2024-06-15',
-      active: true,
-    },
-  ]);
+  const [jobOpenings, setJobOpenings] = useState<JobOpening[]>(DEFAULT_JOB_OPENINGS);
+  const [partTimeJobs, setPartTimeJobs] = useState<PartTimeJob[]>(DEFAULT_PART_TIME_JOBS);
 
   const [isEditing, setIsEditing] = useState(false);
   const [settingId, setSettingId] = useState<string | null>(null);
+  const [partTimeSettingId, setPartTimeSettingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadCareers = async () => {
-      setLoading(true);
-      try {
-        const setting = await settingsAPI.getByKey('careers.openings');
-        if (setting?.value) {
-          setSettingId(String(setting.id));
-          const parsed = JSON.parse(setting.value);
-          if (Array.isArray(parsed)) {
-            setJobOpenings(
-              parsed.map((job, index) => ({
-                id: job.id ?? String(index + 1),
-                title: job.title ?? '',
-                department: job.department ?? '',
-                location: job.location ?? '',
-                type: job.type ?? 'Full-time',
-                experience: job.experience ?? '',
-                salary: job.salary ?? '',
-                description: job.description ?? '',
-                requirements: Array.isArray(job.requirements) ? job.requirements : [''],
-                deadline: job.deadline ?? '',
-                active: job.active ?? true,
-              }))
-            );
-          }
-        }
-      } catch (err: any) {
-        if (err?.response?.status !== 404) {
-          setError(err.message || 'Failed to load job openings.');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadCareers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [openingsSetting, partTimeSetting] = await Promise.all([
+        settingsAPI.getByKey('careers.openings'),
+        settingsAPI.getByKey('careers.part_time'),
+      ]);
 
-    loadCareers();
+      if (openingsSetting?.value) {
+        try {
+          const parsed = JSON.parse(openingsSetting.value);
+          const normalized = normalizeJobOpenings(parsed, { ensureRequirementEntry: true });
+          setJobOpenings(normalized.length ? normalized : DEFAULT_JOB_OPENINGS);
+        } catch (parseError) {
+          console.error('Failed to parse job openings JSON', parseError);
+          setJobOpenings(DEFAULT_JOB_OPENINGS);
+        }
+        setSettingId(String(openingsSetting.id));
+      } else {
+        setSettingId(null);
+        setJobOpenings(DEFAULT_JOB_OPENINGS);
+      }
+
+      if (partTimeSetting?.value) {
+        try {
+          const parsed = JSON.parse(partTimeSetting.value);
+          const normalized = normalizePartTimeJobs(parsed, { ensureEntry: true });
+          setPartTimeJobs(normalized.length ? normalized : DEFAULT_PART_TIME_JOBS);
+        } catch (parseError) {
+          console.error('Failed to parse part-time jobs JSON', parseError);
+          setPartTimeJobs(DEFAULT_PART_TIME_JOBS);
+        }
+        setPartTimeSettingId(String(partTimeSetting.id));
+      } else {
+        setPartTimeSettingId(null);
+        setPartTimeJobs(DEFAULT_PART_TIME_JOBS);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load careers data.');
+      setJobOpenings(DEFAULT_JOB_OPENINGS);
+      setPartTimeJobs(DEFAULT_PART_TIME_JOBS);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadCareers();
+  }, [loadCareers]);
 
   const handleSave = async () => {
     setError(null);
     try {
-      const payload = jobOpenings.map((job, index) => ({
-        ...job,
-        id: job.id ?? String(index + 1),
-      }));
+      const payload = prepareJobOpeningsForSave(jobOpenings);
+      const partTimePayload = preparePartTimeJobsForSave(partTimeJobs);
 
       if (settingId) {
         await settingsAPI.update(settingId, {
@@ -129,7 +105,27 @@ const CareersEditor = () => {
         }
       }
 
+      if (partTimeSettingId) {
+        await settingsAPI.update(partTimeSettingId, {
+          value: JSON.stringify(partTimePayload),
+        });
+      } else {
+        const created = await settingsAPI.create({
+          key: 'careers.part_time',
+          value: JSON.stringify(partTimePayload),
+          type: 'json',
+          group: 'careers',
+          description: 'Careers page part-time opportunities',
+          is_public: true,
+        });
+        const newId = created.setting?.id ?? created.id;
+        if (newId) {
+          setPartTimeSettingId(String(newId));
+        }
+      }
+
       setIsEditing(false);
+      await loadCareers();
     } catch (err: any) {
       setError(err.message || 'Failed to save job openings.');
     }
@@ -137,6 +133,7 @@ const CareersEditor = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
+    loadCareers();
   };
 
   const updateJobOpening = (id: string, field: keyof JobOpening, value: any) => {
@@ -146,20 +143,7 @@ const CareersEditor = () => {
   };
 
   const addNewJobOpening = () => {
-    const newJob: JobOpening = {
-      id: Date.now().toString(),
-      title: '',
-      department: '',
-      location: '',
-      type: 'Full-time',
-      experience: '',
-      salary: '',
-      description: '',
-      requirements: [''],
-      deadline: '',
-      active: true
-    };
-    setJobOpenings(prev => [...prev, newJob]);
+    setJobOpenings(prev => [...prev, createEmptyJobOpening()]);
   };
 
   const removeJobOpening = (id: string) => {
@@ -189,10 +173,26 @@ const CareersEditor = () => {
   const removeRequirement = (jobId: string, index: number) => {
     setJobOpenings(prev => prev.map(job => {
       if (job.id === jobId) {
-        return { ...job, requirements: job.requirements.filter((_, i) => i !== index) };
+        const updatedRequirements = job.requirements.filter((_, i) => i !== index);
+        return {
+          ...job,
+          requirements: updatedRequirements.length ? updatedRequirements : [''],
+        };
       }
       return job;
     }));
+  };
+
+  const updatePartTimeJob = (id: string, field: keyof PartTimeJob, value: any) => {
+    setPartTimeJobs(prev => prev.map(job => (job.id === id ? { ...job, [field]: value } : job)));
+  };
+
+  const addPartTimeJob = () => {
+    setPartTimeJobs(prev => [...prev, createEmptyPartTimeJob()]);
+  };
+
+  const removePartTimeJob = (id: string) => {
+    setPartTimeJobs(prev => prev.filter(job => job.id !== id));
   };
 
   const departments = ['Academics', 'Administration', 'Marketing', 'IT', 'Finance', 'HR'];
@@ -389,50 +389,158 @@ const CareersEditor = () => {
               <Plus className="w-4 h-4 mr-2" />
               Add New Job Opening
             </Button>
+
+            <div className="pt-6 border-t">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Part-time Opportunities</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage student part-time roles displayed on the careers page.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {partTimeJobs.map((job) => (
+                  <div key={job.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">{job.title || 'Part-time Role'}</h4>
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={job.active}
+                            onChange={(e) => updatePartTimeJob(job.id, 'active', e.target.checked)}
+                          />
+                          Active
+                        </label>
+                        {partTimeJobs.length > 1 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removePartTimeJob(job.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label>Title</Label>
+                        <Input
+                          value={job.title}
+                          onChange={(e) => updatePartTimeJob(job.id, 'title', e.target.value)}
+                          placeholder="Part-time role title"
+                        />
+                      </div>
+                      <div>
+                        <Label>Stipend</Label>
+                        <Input
+                          value={job.stipend}
+                          onChange={(e) => updatePartTimeJob(job.id, 'stipend', e.target.value)}
+                          placeholder="e.g., ₹5,000/month"
+                        />
+                      </div>
+                      <div>
+                        <Label>Duration</Label>
+                        <Input
+                          value={job.duration}
+                          onChange={(e) => updatePartTimeJob(job.id, 'duration', e.target.value)}
+                          placeholder="e.g., 6 months"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Description</Label>
+                      <Textarea
+                        value={job.description}
+                        onChange={(e) => updatePartTimeJob(job.id, 'description', e.target.value)}
+                        placeholder="Describe the role"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button onClick={addPartTimeJob} variant="outline" className="w-full mt-4">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Part-time Role
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {jobOpenings.filter(job => job.active).map((job) => (
-              <div key={job.id} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-3">
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Current Openings</h3>
+              {jobOpenings.filter(job => job.active).map((job) => (
+                <div key={job.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="font-semibold text-lg">{job.title}</h4>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <span>{job.department}</span>
+                        <span>•</span>
+                        <span>{job.location}</span>
+                        <span>•</span>
+                        <span>{job.type}</span>
+                        <span>•</span>
+                        <span>{job.experience}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-primary">{job.salary}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Deadline: {job.deadline ? new Date(job.deadline).toLocaleDateString() : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-muted-foreground mb-3">{job.description}</p>
+                  
                   <div>
-                    <h4 className="font-semibold text-lg">{job.title}</h4>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <span>{job.department}</span>
-                      <span>•</span>
-                      <span>{job.location}</span>
-                      <span>•</span>
-                      <span>{job.type}</span>
-                      <span>•</span>
-                      <span>{job.experience}</span>
-                    </div>
+                    <h5 className="font-medium mb-2">Requirements:</h5>
+                    <ul className="list-disc list-inside space-y-1">
+                      {job.requirements.map((requirement, index) => (
+                        <li key={index} className="text-sm text-muted-foreground">{requirement}</li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-primary">{job.salary}</div>
-                    <div className="text-sm text-muted-foreground">
-                      Deadline: {new Date(job.deadline).toLocaleDateString()}
+                </div>
+              ))}
+
+              {jobOpenings.filter(job => job.active).length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No active job openings at the moment.
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Part-time Opportunities</h3>
+              {partTimeJobs.filter(job => job.active).map((job) => (
+                <div key={job.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="font-semibold text-lg">{job.title}</h4>
+                      <p className="text-sm text-muted-foreground mt-1">{job.description}</p>
+                    </div>
+                    <div className="text-right text-sm text-muted-foreground">
+                      {job.stipend && <div className="font-semibold text-primary">{job.stipend}</div>}
+                      {job.duration && <div>Duration: {job.duration}</div>}
                     </div>
                   </div>
                 </div>
-                
-                <p className="text-muted-foreground mb-3">{job.description}</p>
-                
-                <div>
-                  <h5 className="font-medium mb-2">Requirements:</h5>
-                  <ul className="list-disc list-inside space-y-1">
-                    {job.requirements.map((requirement, index) => (
-                      <li key={index} className="text-sm text-muted-foreground">{requirement}</li>
-                    ))}
-                  </ul>
+              ))}
+
+              {partTimeJobs.filter(job => job.active).length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No active part-time opportunities at the moment.
                 </div>
-              </div>
-            ))}
-            
-            {jobOpenings.filter(job => job.active).length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No active job openings at the moment.
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </CardContent>
