@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plane, GraduationCap, Users, Award } from 'lucide-react';
 import { ArrowRight } from 'lucide-react';
-import heroImage from '@/assets/hero-image.webp';
+const heroImage = '/ecr-campus-aerial.webp';
 import { settingsAPI } from '@/lib/api';
 
 interface HeroData {
