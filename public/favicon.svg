@@ -1,41 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <!-- Circular background to make square logo appear circular -->
-  <circle cx="128" cy="128" r="128" fill="#ffffff" />
-  
-  <!-- Center the logo and clip to circle -->
   <defs>
     <clipPath id="circleMask">
-      <circle cx="128" cy="128" r="122" />
+      <circle cx="128" cy="128" r="128" />
     </clipPath>
   </defs>
   
-  <!-- Shield background in circle -->
-  <circle cx="128" cy="128" r="122" fill="#f5f5f5" stroke="#0A3D91" stroke-width="4" />
+  <!-- Circular background -->
+  <circle cx="128" cy="128" r="128" fill="#ffffff" />
+  <circle cx="128" cy="128" r="128" fill="url(#logoGradient)" opacity="0.05" />
   
-  <!-- Shield shape -->
-  <path d="M128 54L198 78V130C198 174 160 214 128 226C96 214 58 174 58 130V78Z" fill="#0A3D91" clip-path="url(#circleMask)" />
+  <!-- Gradient for subtle background -->
+  <defs>
+    <radialGradient id="logoGradient">
+      <stop offset="0%" style="stop-color:#0A3D91;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#0A3D91;stop-opacity:0" />
+    </radialGradient>
+  </defs>
   
-  <!-- Book icon (top left) -->
-  <g transform="translate(85, 85)" clip-path="url(#circleMask)">
-    <rect x="2" y="2" width="12" height="18" rx="1" fill="none" stroke="white" stroke-width="1.5" />
-    <line x1="8" y1="2" x2="8" y2="20" stroke="white" stroke-width="1.5" />
+  <!-- Shield shape centered -->
+  <path d="M128 40L190 62V115C190 155 158 190 128 202C98 190 66 155 66 115V62Z" fill="#0A3D91" clip-path="url(#circleMask)" />
+  
+  <!-- Book icon (top left quadrant) -->
+  <g transform="translate(88, 88)">
+    <rect x="2" y="2" width="10" height="14" rx="1" fill="none" stroke="white" stroke-width="1.2" />
+    <line x1="7" y1="2" x2="7" y2="16" stroke="white" stroke-width="1.2" />
   </g>
   
-  <!-- Plane icon (top right) -->
-  <g transform="translate(160, 85)" clip-path="url(#circleMask)">
-    <path d="M8 2L12 10L8 8L4 10Z" fill="white" />
-    <path d="M8 8L2 14L6 12L8 18L10 12L14 14Z" fill="white" />
+  <!-- Plane icon (top right quadrant) -->
+  <g transform="translate(150, 88)">
+    <path d="M6 2L10 8L6 6L2 8Z" fill="white" />
+    <path d="M6 6L1 11L5 9L6 14L7 9L11 11Z" fill="white" />
   </g>
   
-  <!-- Medical cross (bottom left) -->
-  <g transform="translate(85, 160)" clip-path="url(#circleMask)">
-    <rect x="4" y="1" width="2" height="12" fill="white" />
-    <rect x="1" y="4" width="12" height="2" fill="white" />
+  <!-- Medical cross (bottom left quadrant) -->
+  <g transform="translate(88, 150)">
+    <rect x="4" y="1" width="2" height="10" fill="white" />
+    <rect x="1" y="4" width="10" height="2" fill="white" />
   </g>
   
-  <!-- Crown icon (bottom right) -->
-  <g transform="translate(160, 160)" clip-path="url(#circleMask)">
-    <path d="M2 12L5 6L8 10L11 5L14 12" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-    <line x1="1" y1="12" x2="15" y2="12" stroke="white" stroke-width="1.5" />
+  <!-- Crown icon (bottom right quadrant) -->
+  <g transform="translate(150, 150)">
+    <path d="M2 10L4 5L6 8L8 4L10 10" fill="none" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+    <line x1="1" y1="10" x2="11" y2="10" stroke="white" stroke-width="1.2" />
   </g>
+  
+  <!-- Decorative border -->
+  <circle cx="128" cy="128" r="128" fill="none" stroke="#0A3D91" stroke-width="3" opacity="0.3" />
 </svg>
