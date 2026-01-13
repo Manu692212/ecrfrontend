@@ -87,7 +87,7 @@ export default function Login() {
       </div>
     );
 
-  const CredentialForm = () => (
+  const renderCredentialForm = () => (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       <div className="space-y-4 rounded-md shadow-sm">
         <div>
@@ -141,7 +141,7 @@ export default function Login() {
     </form>
   );
 
-  const OtpForm = () => (
+  const renderOtpForm = () => (
     <form className="mt-8 space-y-6" onSubmit={handleVerifyOtp}>
       <div className="text-center space-y-3">
         <p className="text-sm text-muted-foreground">
@@ -196,7 +196,7 @@ export default function Login() {
 
         {renderError()}
 
-        {step === 'credentials' ? <CredentialForm /> : <OtpForm />}
+        {step === 'credentials' ? renderCredentialForm() : renderOtpForm()}
 
         <div className="mt-6 text-center text-sm">
           <p className="text-gray-600">
