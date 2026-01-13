@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,83 @@ interface Setting {
   is_public: boolean;
 }
 
+const SMTP_FIELDS = [
+  {
+    key: 'smtp.mailer',
+    label: 'Mailer',
+    placeholder: 'smtp',
+    description: 'transport driver name',
+  },
+  {
+    key: 'smtp.host',
+    label: 'Host',
+    placeholder: 'smtp.mailtrap.io',
+    description: 'SMTP host address',
+  },
+  {
+    key: 'smtp.port',
+    label: 'Port',
+    placeholder: '587',
+    description: 'SMTP port',
+  },
+  {
+    key: 'smtp.username',
+    label: 'Username',
+    placeholder: 'SMTP username',
+    description: 'SMTP account username',
+  },
+  {
+    key: 'smtp.password',
+    label: 'Password',
+    placeholder: 'SMTP password',
+    type: 'password',
+    description: 'SMTP account password',
+  },
+  {
+    key: 'smtp.encryption',
+    label: 'Encryption',
+    placeholder: 'tls / ssl',
+    description: 'Encryption protocol',
+  },
+  {
+    key: 'smtp.from_address',
+    label: 'Sender Address',
+    placeholder: 'no-reply@ecracademy.com',
+    description: 'From email address',
+  },
+  {
+    key: 'smtp.from_name',
+    label: 'Sender Name',
+    placeholder: 'ECR Academy',
+    description: 'Display name for outgoing mail',
+  },
+  {
+    key: 'smtp.recipient_address',
+    label: 'Notification Recipient',
+    placeholder: 'admissions@ecracademy.com',
+    description: 'Default recipient for application emails',
+  },
+  {
+    key: 'smtp.recipient_name',
+    label: 'Recipient Name',
+    placeholder: 'Admissions Desk',
+    description: 'Display name for notification recipient',
+  },
+] as const;
+
+type SmtpSettingKey = (typeof SMTP_FIELDS)[number]['key'];
+
+const SMTP_KEYS: SmtpSettingKey[] = SMTP_FIELDS.map((field) => field.key);
+
+const buildInitialSmtpValues = () =>
+  SMTP_FIELDS.reduce(
+    (acc, field) => {
+      acc[field.key] = '';
+      return acc;
+    },
+    {} as Record<SmtpSettingKey, string>
+  );
+
 const BadgeForGroup = ({ group }: { group: string }) => {
   const color = group === 'home' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary';
   return <Badge className={color}>{group}</Badge>;
@@ -47,6 +124,12 @@ export default function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [smtpValues, setSmtpValues] = useState<Record<SmtpSettingKey, string>>(buildInitialSmtpValues);
+  const [smtpSettingsMap, setSmtpSettingsMap] = useState<Partial<Record<SmtpSettingKey, Setting>>>({});
+  const [smtpLoading, setSmtpLoading] = useState(true);
+  const [smtpSaving, setSmtpSaving] = useState(false);
+  const [smtpError, setSmtpError] = useState<string | null>(null);
+  const [smtpMessage, setSmtpMessage] = useState<string | null>(null);
   const { refreshSession } = useAuth();
 
   const fetchSettings = async (pageNumber = 1) => {
@@ -114,9 +197,76 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const loadSmtpSettings = useCallback(async () => {
+    setSmtpLoading(true);
+    setSmtpError(null);
+    try {
+      const response: Setting[] = await settingsAPI.getGroup('smtp');
+      const keyedSettings: Partial<Record<SmtpSettingKey, Setting>> = {};
+      const nextValues = buildInitialSmtpValues();
+
+      response?.forEach((setting) => {
+        if (SMTP_KEYS.includes(setting.key as SmtpSettingKey)) {
+          const key = setting.key as SmtpSettingKey;
+          keyedSettings[key] = setting;
+          nextValues[key] = setting.value ?? '';
+        }
+      });
+
+      setSmtpSettingsMap(keyedSettings);
+      setSmtpValues(nextValues);
+    } catch (err: any) {
+      setSmtpError(err?.message || 'Unable to load SMTP settings');
+    } finally {
+      setSmtpLoading(false);
+    }
+  }, []);
+
+  const handleSmtpInputChange = (key: SmtpSettingKey, value: string) => {
+    setSmtpValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const saveSmtpSettings = async () => {
+    setSmtpSaving(true);
+    setSmtpMessage(null);
+    setSmtpError(null);
+    try {
+      await Promise.all(
+        SMTP_FIELDS.map(async (field) => {
+          const value = smtpValues[field.key] ?? '';
+          const existing = smtpSettingsMap[field.key];
+
+          if (existing) {
+            await settingsAPI.update(existing.id, { value });
+          } else {
+            await settingsAPI.create({
+              key: field.key,
+              value,
+              type: 'text',
+              group: 'smtp',
+              description: field.description,
+              is_public: false,
+            });
+          }
+        })
+      );
+
+      setSmtpMessage('SMTP settings saved successfully.');
+      await loadSmtpSettings();
+    } catch (err: any) {
+      setSmtpError(err?.message || 'Unable to save SMTP settings');
+    } finally {
+      setSmtpSaving(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings(page);
   }, [page]);
+
+  useEffect(() => {
+    loadSmtpSettings();
+  }, [loadSmtpSettings]);
 
   const openEdit = (setting: Setting) => {
     setSelectedSetting(setting);
@@ -214,6 +364,57 @@ export default function AdminSettingsPage() {
           <p className="text-xs text-muted-foreground">
             Settings are stored via the backend API; editing affects the public content immediately.
           </p>
+        </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>SMTP & Mail</CardTitle>
+              <CardDescription>Configure mail transport used for OTPs and public submissions.</CardDescription>
+            </div>
+            <Button size="sm" variant="outline" onClick={loadSmtpSettings} disabled={smtpLoading || smtpSaving}>
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {smtpError && (
+            <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+              {smtpError}
+            </div>
+          )}
+          {smtpMessage && (
+            <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+              {smtpMessage}
+            </div>
+          )}
+          {smtpLoading ? (
+            <p className="text-sm text-muted-foreground">Loading SMTP settings...</p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {SMTP_FIELDS.map((field) => (
+                <div key={field.key} className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{field.label}</label>
+                  <Input
+                    type={field.type ?? 'text'}
+                    value={smtpValues[field.key] ?? ''}
+                    onChange={(event) => handleSmtpInputChange(field.key, event.target.value)}
+                    placeholder={field.placeholder}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground">
+            These credentials power OTP delivery and submission notifications. Keep them private.
+          </p>
+          <Button onClick={saveSmtpSettings} disabled={smtpSaving || smtpLoading}>
+            {smtpSaving ? 'Saving SMTP…' : 'Save SMTP Settings'}
+          </Button>
         </CardFooter>
       </Card>
 
