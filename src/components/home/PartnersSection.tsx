@@ -72,24 +72,24 @@ const PartnersSection = () => {
   return (
     <section className="py-12 bg-white border-y border-border">
       <div className="ecr-container">
-        <p className="text-center text-sm text-muted-foreground mb-8">
+        <p className="text-center text-xl md:text-2xl font-bold text-foreground mb-8">
           Top Hiring Companies and Partners
         </p>
         <div className="relative">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-4">
             <button
               onClick={prevSlide}
-              className="flex-shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+              className="hidden md:flex flex-shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
               aria-label="Previous partners"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="w-full md:flex-1 overflow-hidden">
               <div 
-                className="flex gap-6 transition-transform duration-500"
+                className="flex gap-3 md:gap-6 transition-transform duration-500"
                 style={{
-                  transform: `translateX(-${currentIndex * (100 / slidesPerView + 4)}%)`,
+                  transform: `translateX(-${currentIndex * (100 / slidesPerView + (slidesPerView === 1 ? 3 : 2))}%)`,
                   width: `${(partners.length / slidesPerView + 2) * (100 / slidesPerView)}%`,
                 }}
               >
@@ -100,13 +100,13 @@ const PartnersSection = () => {
                     className="flex-shrink-0 flex items-center justify-center rounded-lg bg-white border border-border hover:border-primary/30 transition-all shadow-sm"
                     style={{
                       width: `${100 / slidesPerView}%`,
-                      minHeight: '160px',
+                      minHeight: slidesPerView === 1 ? '140px' : '160px',
                     }}
                   >
                     <img
                       src={partner.logo}
                       alt={partner.name}
-                      className="max-h-24 max-w-[90%] object-contain opacity-80 hover:opacity-100 transition-opacity"
+                      className="max-h-20 md:max-h-24 max-w-[85%] md:max-w-[90%] object-contain opacity-80 hover:opacity-100 transition-opacity"
                       loading="lazy"
                     />
                   </div>
@@ -116,15 +116,48 @@ const PartnersSection = () => {
 
             <button
               onClick={nextSlide}
-              className="flex-shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+              className="hidden md:flex flex-shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
               aria-label="Next partners"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Carousel indicators */}
-          <div className="flex justify-center gap-2 mt-6">
+          {/* Mobile carousel controls */}
+          <div className="md:hidden flex items-center justify-between mt-4 gap-2">
+            <button
+              onClick={prevSlide}
+              className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+              aria-label="Previous partners"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            
+            {/* Carousel indicators - Mobile visible */}
+            <div className="flex justify-center gap-2 flex-1">
+              {partners.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-2 rounded-full transition-all ${
+                    index === currentIndex ? 'bg-primary w-6' : 'bg-border w-2'
+                  }`}
+                  aria-label={`Go to partner ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={nextSlide}
+              className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+              aria-label="Next partners"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Carousel indicators - Desktop only */}
+          <div className="hidden md:flex justify-center gap-2 mt-6">
             {partners.map((_, index) => (
               <button
                 key={index}
