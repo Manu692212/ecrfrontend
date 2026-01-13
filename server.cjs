@@ -1,6 +1,11 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
+
+const DEFAULT_BACKEND_API_BASE_URL = 'https://ecrbackend1.onrender.com/api';
+const backendBaseUrl = process.env.BACKEND_API_BASE_URL || DEFAULT_BACKEND_API_BASE_URL;
+const backendUrl = new URL(backendBaseUrl.endsWith('/') ? backendBaseUrl : `${backendBaseUrl}/`);
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -24,19 +29,26 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
   // Handle API requests to backend
   if (req.url.startsWith('/api') || req.url.startsWith('/admin')) {
-    // Proxy API and admin requests to Laravel backend
-    const options = {
-      hostname: 'localhost',
-      port: 8000,
-      path: req.url,
-      method: req.method,
-      headers: req.headers
-    };
+    // Proxy API and admin requests to backend
+    const targetUrl = new URL(req.url, backendUrl);
+    const client = targetUrl.protocol === 'https:' ? https : http;
 
-    const proxy = http.request(options, (backendRes) => {
-      res.writeHead(backendRes.statusCode, backendRes.headers);
-      backendRes.pipe(res);
-    });
+    const proxy = client.request(
+      {
+        hostname: targetUrl.hostname,
+        port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
+        path: targetUrl.pathname + targetUrl.search,
+        method: req.method,
+        headers: {
+          ...req.headers,
+          host: targetUrl.host,
+        },
+      },
+      (backendRes) => {
+        res.writeHead(backendRes.statusCode, backendRes.headers);
+        backendRes.pipe(res);
+      }
+    );
 
     proxy.on('error', (err) => {
       res.writeHead(500);
