@@ -104,13 +104,16 @@ export default function AdminLayout({ children }: { children?: ReactNode }) {
         {/* Top navigation */}
         <header className="bg-background/95 border-b border-border backdrop-blur">
           <div className="ecr-container flex h-16 items-center justify-between">
-            <button
-              type="button"
-              className="rounded-md p-1 text-gray-500 hover:bg-gray-100"
-              onClick={() => setSidebarOpen((prev) => !prev)}
-            >
-              <Menu className="h-6 w-6" />
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="rounded-md p-1 text-gray-500 hover:bg-gray-100"
+                onClick={() => setSidebarOpen((prev) => !prev)}
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              <img src="/ecr-logo.png" alt="ECR Logo" className="w-10 h-10 rounded-full object-cover" />
+            </div>
             <div className="flex-1 flex justify-between items-center">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Navigation</p>

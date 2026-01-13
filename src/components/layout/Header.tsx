@@ -27,12 +27,8 @@ const Header = () => {
       <div className="ecr-container">
         <nav className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/ecr-logo.png" alt="ECR Logo" className="w-12 h-12 rounded-full object-cover" />
-            <div className="hidden sm:block">
-              <h1 className="font-display text-xl font-bold text-foreground">ECR Academy</h1>
-              <p className="text-xs text-muted-foreground">Aviation Excellence</p>
-            </div>
+          <Link to="/">
+            <img src="/ecr-headder-logo.webp" alt="ECR Header Logo" className="h-12" />
           </Link>
 
           {/* Desktop Navigation */}
