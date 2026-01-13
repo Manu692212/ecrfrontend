@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Plane } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Header = () => {
@@ -28,9 +28,7 @@ const Header = () => {
         <nav className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gold-gradient flex items-center justify-center">
-              <Plane className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img src="/ecr-logo.png" alt="ECR Logo" className="w-12 h-12" />
             <div className="hidden sm:block">
               <h1 className="font-display text-xl font-bold text-foreground">ECR Academy</h1>
               <p className="text-xs text-muted-foreground">Aviation Excellence</p>
