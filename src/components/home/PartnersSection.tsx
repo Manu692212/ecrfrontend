@@ -72,7 +72,7 @@ const PartnersSection = () => {
   return (
     <section className="py-12 bg-white border-y border-border">
       <div className="ecr-container">
-        <p className="text-center text-xl md:text-2xl font-bold text-foreground mb-8">
+        <p className="text-center text-xl md:text-2xl font-bold text-black mb-8">
           Top Hiring Companies and Partners
         </p>
         <div className="relative">
@@ -89,18 +89,18 @@ const PartnersSection = () => {
               <div 
                 className="flex gap-3 md:gap-6 transition-transform duration-500"
                 style={{
-                  transform: `translateX(-${currentIndex * (100 / slidesPerView + (slidesPerView === 1 ? 3 : 2))}%)`,
-                  width: `${(partners.length / slidesPerView + 2) * (100 / slidesPerView)}%`,
+                  transform: `translateX(-${currentIndex * 100}%)`,
+                  width: `${partners.length * 100}%`,
                 }}
               >
-                {/* Loop through all partners multiple times for seamless carousel */}
+                {/* Loop through all partners */}
                 {[...partners, ...partners].map((partner, index) => (
                   <div
                     key={index}
                     className="flex-shrink-0 flex items-center justify-center rounded-lg bg-white border border-border hover:border-primary/30 transition-all shadow-sm"
                     style={{
-                      width: `${100 / slidesPerView}%`,
-                      minHeight: slidesPerView === 1 ? '140px' : '160px',
+                      width: `${100 / partners.length}%`,
+                      minHeight: slidesPerView === 1 ? '160px' : '160px',
                     }}
                   >
                     <img
