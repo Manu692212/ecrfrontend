@@ -140,14 +140,17 @@ const HeroSection = () => {
 
             <div className="flex items-center gap-3 pt-2">
               <div className="flex -space-x-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 border border-background flex items-center justify-center text-sm font-semibold text-primary">
+                <div className="w-10 h-10 rounded-full bg-blue-500 border-2 border-background flex items-center justify-center text-sm font-semibold text-white" title="Rajesh Kumar">
+                  R
+                </div>
+                <div className="w-10 h-10 rounded-full bg-purple-500 border-2 border-background flex items-center justify-center text-sm font-semibold text-white" title="Priya Singh">
+                  P
+                </div>
+                <div className="w-10 h-10 rounded-full bg-pink-500 border-2 border-background flex items-center justify-center text-sm font-semibold text-white" title="Aarav Patel">
                   A
                 </div>
-                <div className="w-10 h-10 rounded-full bg-primary/10 border border-background flex items-center justify-center text-sm font-semibold text-primary">
-                  B
-                </div>
-                <div className="w-10 h-10 rounded-full bg-primary/10 border border-background flex items-center justify-center text-sm font-semibold text-primary">
-                  C
+                <div className="w-10 h-10 rounded-full bg-green-500 border-2 border-background flex items-center justify-center text-sm font-semibold text-white" title="Neha Sharma">
+                  N
                 </div>
               </div>
               <div>
