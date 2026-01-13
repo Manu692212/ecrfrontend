@@ -70,7 +70,7 @@ const PartnersSection = () => {
   };
 
   return (
-    <section className="py-12 bg-card border-y border-border">
+    <section className="py-12 bg-white border-y border-border">
       <div className="ecr-container">
         <p className="text-center text-sm text-muted-foreground mb-8">
           Top Hiring Companies and Partners
