@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
 import Login from '@/pages/admin/Login';
+import ForgotPassword from '@/pages/admin/ForgotPassword';
 import CoursesPage from '@/pages/admin/courses';
 import AcademicCouncilPage from '@/pages/admin/academic-council';
 import ManagementPage from '@/pages/admin/management';
@@ -52,6 +53,7 @@ export function AdminRoutes() {
   return (
     <Routes>
       <Route path="login" element={<Login />} />
+      <Route path="forgot-password" element={<ForgotPassword />} />
       <Route
         path="*"
         element={

@@ -183,6 +183,65 @@ export const authAPI = {
   login: async (email: string, password: string) => {
     return api.post('/admins/login', { email, password });
   },
+  verifyLoginOtp: async (otp_token: string, code: string) => {
+    return api.post('/admins/login/verify', { otp_token, code });
+  },
+  requestPasswordReset: async (email: string) => {
+    return api.post('/admins/forgot-password', { email });
+  },
+  resetPassword: async (payload: { email: string; otp_token: string; code: string; password: string; password_confirmation: string }) => {
+    return api.post('/admins/forgot-password/verify', payload);
+  },
+};
+
+export const publicAPI = {
+  submitApplication: async (data: any) => {
+    return api.post('/public/applications', data);
+  },
+};
+
+export const applicationsAPI = {
+  list: async (params?: { form_type?: string; status?: string; page?: number; search?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.form_type) query.append('form_type', params.form_type);
+    if (params?.status) query.append('status', params.status);
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.search) query.append('search', params.search);
+
+    const qs = query.toString();
+    const response = await api.get(`/applications${qs ? `?${qs}` : ''}`);
+
+    if (response?.data) {
+      return {
+        data: response.data,
+        meta: {
+          total: response.total ?? response.data.length ?? 0,
+          current_page: response.current_page ?? response.meta?.current_page ?? 1,
+          last_page: response.last_page ?? response.meta?.last_page ?? 1,
+        },
+      };
+    }
+
+    const data = Array.isArray(response) ? response : response?.data || [];
+
+    return {
+      data,
+      meta: {
+        total: data.length,
+        current_page: 1,
+        last_page: 1,
+      },
+    };
+  },
+  getById: async (id: string | number) => {
+    const response = await api.get(`/applications/${id}`);
+    return response?.data ?? response;
+  },
+  update: async (id: string | number, data: any) => {
+    const response = await api.put(`/applications/${id}`, data);
+    return response?.data ?? response;
+  },
+  delete: async (id: string | number) => api.delete(`/applications/${id}`),
 };
 
 export const adminsAPI = {

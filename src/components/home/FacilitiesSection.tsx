@@ -136,7 +136,7 @@ const FacilitiesSection = () => {
               <span className="inline-flex items-center rounded-full bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-primary/90">
                 Campus Life
               </span>
-              <h2 className="font-display text-3xl md:text-5xl font-bold leading-tight">
+              <h2 className="font-display text-3xl md:text-5xl font-bold leading-tight text-white">
                 Spaces crafted to inspire learning, collaboration, and wellbeing
               </h2>
               <p className="text-base md:text-lg text-white/70">

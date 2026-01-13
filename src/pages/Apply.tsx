@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { GraduationCap, Briefcase, Clock, Send, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { publicAPI } from '@/lib/api';
 
 const applicationTypes = [
   { id: 'course', label: 'Course Enrollment', icon: GraduationCap, description: 'Apply for our degree programs' },
@@ -62,14 +63,47 @@ const Apply = () => {
     message: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Application Submitted!",
-      description: "We'll review your application and contact you soon.",
-    });
-    setSubmitted(true);
+    setSubmitting(true);
+    setError(null);
+
+    const payload: any = {
+      form_type: applicationType,
+      full_name: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      title:
+        applicationType === 'course'
+          ? formData.course
+          : formData.position || formData.course,
+      message: formData.message,
+      payload: {
+        ...formData,
+      },
+    };
+
+    try {
+      await publicAPI.submitApplication(payload);
+      toast({
+        title: 'Application submitted!',
+        description: "We'll review your application and contact you soon.",
+      });
+      setSubmitted(true);
+    } catch (err: any) {
+      const message = err?.message || 'Failed to submit application. Please try again.';
+      setError(message);
+      toast({
+        title: 'Submission failed',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -303,9 +337,24 @@ const Apply = () => {
                   />
                 </div>
 
-                <Button type="submit" variant="hero" className="w-full" size="lg">
-                  <Send className="w-5 h-5" />
-                  Submit Application
+                {error && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
+                    {error}
+                  </p>
+                )}
+
+                <Button type="submit" variant="hero" className="w-full" size="lg" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Send className="w-5 h-5 animate-pulse" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Submit Application
+                    </>
+                  )}
                 </Button>
               </form>
             </div>

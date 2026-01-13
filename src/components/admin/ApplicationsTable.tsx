@@ -1,15 +1,17 @@
 export interface ApplicationRow {
-  id: string;
-  studentName: string;
-  studentEmail: string;
-  courseTitle: string;
-  submittedAt: string;
-  remarks?: string;
+  id: string | number;
+  full_name: string;
+  email: string;
+  phone?: string;
+  form_type: string;
+  title?: string;
+  status?: string;
+  created_at?: string;
 }
 
 interface ApplicationsTableProps {
   applications: ApplicationRow[];
-  selectedId?: string;
+  selectedId?: string | number;
   onView?: (submission: ApplicationRow) => void;
 }
 
@@ -24,9 +26,9 @@ export default function ApplicationsTable({
         <thead>
           <tr className="border-b border-border text-xs uppercase tracking-widest text-muted-foreground">
             <th className="py-2">ID</th>
-            <th className="py-2">Student</th>
+            <th className="py-2">Applicant</th>
             <th className="py-2">Email</th>
-            <th className="py-2">Course</th>
+            <th className="py-2">Type</th>
             <th className="py-2">Submitted</th>
             <th className="py-2">Action</th>
           </tr>
@@ -42,10 +44,14 @@ export default function ApplicationsTable({
               <td className="py-3 text-xs font-semibold text-muted-foreground">
                 {submission.id}
               </td>
-              <td className="py-3 font-medium">{submission.studentName}</td>
-              <td className="py-3 text-muted-foreground">{submission.studentEmail}</td>
-              <td className="py-3 text-muted-foreground">{submission.courseTitle}</td>
-              <td className="py-3 text-muted-foreground">{submission.submittedAt}</td>
+              <td className="py-3 font-medium">{submission.full_name}</td>
+              <td className="py-3 text-muted-foreground">{submission.email}</td>
+              <td className="py-3 text-muted-foreground capitalize">{submission.form_type.replace('-', ' ')}</td>
+              <td className="py-3 text-muted-foreground">
+                {submission.created_at
+                  ? new Date(submission.created_at).toLocaleString()
+                  : '—'}
+              </td>
               <td className="py-3">
                 <button
                   onClick={() => onView?.(submission)}
