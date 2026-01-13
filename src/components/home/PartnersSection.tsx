@@ -97,18 +97,21 @@ const PartnersSection = () => {
                 {[...partners, ...partners].map((partner, index) => (
                   <div
                     key={index}
-                    className="flex-shrink-0 flex items-center justify-center rounded-lg bg-white border border-border hover:border-primary/30 transition-all shadow-sm"
+                    className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg bg-white border border-border hover:border-primary/30 transition-all shadow-sm p-2 md:p-4"
                     style={{
                       width: `${100 / partners.length}%`,
-                      minHeight: slidesPerView === 1 ? '160px' : '160px',
+                      minHeight: slidesPerView === 1 ? '120px' : '160px',
                     }}
                   >
                     <img
                       src={partner.logo}
                       alt={partner.name}
-                      className="max-h-20 md:max-h-24 max-w-[85%] md:max-w-[90%] object-contain opacity-80 hover:opacity-100 transition-opacity"
+                      className="max-h-12 md:max-h-24 max-w-[80%] md:max-w-[90%] object-contain opacity-80 hover:opacity-100 transition-opacity mb-1 md:mb-2"
                       loading="lazy"
                     />
+                    <p className="text-xs md:text-sm font-medium text-center text-gray-700 line-clamp-2">
+                      {partner.name}
+                    </p>
                   </div>
                 ))}
               </div>
