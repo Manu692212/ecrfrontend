@@ -208,14 +208,6 @@ const Footer = () => {
                   >
                     {contactInfo.phone}
                   </a>
-                  {contactInfo.altPhone && (
-                    <a
-                      href={`tel:${contactInfo.altPhone}`}
-                      className="hover:text-primary transition-colors block"
-                    >
-                      {contactInfo.altPhone}
-                    </a>
-                  )}
                 </div>
               </li>
             </ul>
