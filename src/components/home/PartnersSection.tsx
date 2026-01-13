@@ -97,7 +97,7 @@ const PartnersSection = () => {
                 {[...partners, ...partners].map((partner, index) => (
                   <div
                     key={index}
-                    className="flex-shrink-0 flex items-center justify-center rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-all"
+                    className="flex-shrink-0 flex items-center justify-center rounded-lg bg-white border border-border hover:border-primary/30 transition-all shadow-sm"
                     style={{
                       width: `${100 / slidesPerView}%`,
                       minHeight: '160px',
