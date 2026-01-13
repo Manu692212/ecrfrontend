@@ -192,6 +192,12 @@ export const authAPI = {
   resetPassword: async (payload: { email: string; otp_token: string; code: string; password: string; password_confirmation: string }) => {
     return api.post('/admins/forgot-password/verify', payload);
   },
+  requestPasswordChangeOtp: async () => {
+    return api.post('/admins/password-change/request-otp');
+  },
+  changePasswordWithOtp: async (payload: { otp_token: string; code: string; password: string; password_confirmation: string }) => {
+    return api.post('/admins/password-change/verify', payload);
+  },
 };
 
 export const publicAPI = {

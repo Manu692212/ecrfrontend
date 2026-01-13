@@ -13,6 +13,7 @@ interface AuthContextType {
   user: any;
   login: (email: string, password: string) => Promise<LoginResult>;
   verifyLoginOtp: (code: string) => Promise<boolean>;
+  refreshSession: (token: string, admin: any) => void;
   logout: () => void;
   loading: boolean;
   pendingOtp?: {
@@ -52,6 +53,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('adminUser', JSON.stringify(admin));
     setIsAuthenticated(true);
     setUser(admin);
+  };
+
+  const refreshSession = (token: string, admin: any) => {
+    persistSession(token, admin);
   };
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
@@ -106,7 +111,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, verifyLoginOtp, logout, loading, pendingOtp }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, user, login, verifyLoginOtp, refreshSession, logout, loading, pendingOtp }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );

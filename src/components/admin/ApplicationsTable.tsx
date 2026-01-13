@@ -15,6 +15,11 @@ interface ApplicationsTableProps {
   onView?: (submission: ApplicationRow) => void;
 }
 
+const formatFormType = (value?: string | null) => {
+  if (!value) return 'General';
+  return value.replace(/[-_]/g, ' ');
+};
+
 export default function ApplicationsTable({
   applications,
   selectedId,
@@ -46,7 +51,7 @@ export default function ApplicationsTable({
               </td>
               <td className="py-3 font-medium">{submission.full_name}</td>
               <td className="py-3 text-muted-foreground">{submission.email}</td>
-              <td className="py-3 text-muted-foreground capitalize">{submission.form_type.replace('-', ' ')}</td>
+              <td className="py-3 text-muted-foreground capitalize">{formatFormType(submission.form_type)}</td>
               <td className="py-3 text-muted-foreground">
                 {submission.created_at
                   ? new Date(submission.created_at).toLocaleString()

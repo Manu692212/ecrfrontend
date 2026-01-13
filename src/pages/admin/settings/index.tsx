@@ -11,7 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { settingsAPI } from '@/lib/api';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { settingsAPI, authAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Setting {
   id: number;
@@ -38,6 +40,14 @@ export default function AdminSettingsPage() {
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [meta, setMeta] = useState<{ current_page: number; last_page: number }>({ current_page: 1, last_page: 1 });
+  const [passwordStep, setPasswordStep] = useState<'idle' | 'otp_sent' | 'success'>('idle');
+  const [passwordOtpToken, setPasswordOtpToken] = useState('');
+  const [passwordOtpCode, setPasswordOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const { refreshSession } = useAuth();
 
   const fetchSettings = async (pageNumber = 1) => {
     setLoading(true);
@@ -53,6 +63,54 @@ export default function AdminSettingsPage() {
       setError(err.message || 'Unable to load settings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const requestPasswordChangeOtp = async () => {
+    setPasswordMessage(null);
+    setPasswordStep('idle');
+    setPasswordLoading(true);
+    try {
+      const response = await authAPI.requestPasswordChangeOtp();
+      if (response?.otp_token) {
+        setPasswordOtpToken(response.otp_token);
+        setPasswordStep('otp_sent');
+        setPasswordMessage('OTP sent to your email. Enter it below to confirm the password change.');
+      } else {
+        setPasswordMessage(response?.message || 'OTP request sent. Check your email.');
+      }
+    } catch (err: any) {
+      setPasswordMessage(err?.message || 'Unable to send OTP. Please try again.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const verifyPasswordChange = async () => {
+    if (!passwordOtpToken) return;
+    setPasswordLoading(true);
+    setPasswordMessage(null);
+    try {
+      const response = await authAPI.changePasswordWithOtp({
+        otp_token: passwordOtpToken,
+        code: passwordOtpCode,
+        password: newPassword,
+        password_confirmation: confirmPassword,
+      });
+
+      if (response?.token && response?.admin) {
+        refreshSession(response.token, response.admin);
+      }
+
+      setPasswordStep('success');
+      setPasswordMessage('Password updated successfully.');
+      setPasswordOtpCode('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordMessage(err?.message || 'Failed to update password. Please verify the OTP and try again.');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -157,6 +215,94 @@ export default function AdminSettingsPage() {
             Settings are stored via the backend API; editing affects the public content immediately.
           </p>
         </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Change Password</CardTitle>
+          <CardDescription>Secure your admin account with an OTP-protected password update.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {passwordMessage && (
+            <div
+              className={`rounded-md border p-3 text-sm ${
+                passwordStep === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : 'border-blue-200 bg-blue-50 text-blue-800'
+              }`}
+            >
+              {passwordMessage}
+            </div>
+          )}
+
+          {passwordStep !== 'otp_sent' && passwordStep !== 'success' && (
+            <Button onClick={requestPasswordChangeOtp} disabled={passwordLoading}>
+              {passwordLoading ? 'Sending OTP…' : 'Send OTP to email'}
+            </Button>
+          )}
+
+          {passwordStep === 'otp_sent' && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">OTP Code</p>
+                <InputOTP maxLength={6} value={passwordOtpCode} onChange={setPasswordOtpCode}>
+                  <InputOTPGroup className="gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((slot) => (
+                      <InputOTPSlot key={slot} index={slot} className="h-11 w-11 text-lg" />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">New Password</label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Confirm Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={verifyPasswordChange}
+                  disabled={
+                    passwordLoading ||
+                    passwordOtpCode.length !== 6 ||
+                    !newPassword ||
+                    newPassword.length < 8 ||
+                    newPassword !== confirmPassword
+                  }
+                >
+                  {passwordLoading ? 'Updating…' : 'Verify & Update Password'}
+                </Button>
+                <Button variant="ghost" onClick={() => setPasswordStep('idle')} disabled={passwordLoading}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {passwordStep === 'success' && (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+              Password changed successfully. Use your new password for the next login.
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

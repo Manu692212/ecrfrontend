@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { authAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Step = 'request' | 'verify' | 'success';
 
@@ -20,6 +21,7 @@ export default function ForgotPassword() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const navigate = useNavigate();
+  const { refreshSession } = useAuth();
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,13 +51,16 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await authAPI.resetPassword({
+      const response = await authAPI.resetPassword({
         email,
         otp_token: otpToken,
         code,
         password,
         password_confirmation: passwordConfirmation,
       });
+      if (response?.token && response?.admin) {
+        refreshSession(response.token, response.admin);
+      }
       setStep('success');
     } catch (err: any) {
       setError(err?.message || 'Failed to reset password. Please check the OTP and try again.');
@@ -199,8 +204,8 @@ export default function ForgotPassword() {
             <div className="rounded-2xl bg-green-50 p-6 text-green-800">
               Your password has been reset successfully.
             </div>
-            <Button className="w-full" onClick={() => navigate('/admin/login')}>
-              Return to Login
+            <Button className="w-full" onClick={() => navigate('/admin/home')}>
+              Go to Dashboard
             </Button>
           </div>
         )}

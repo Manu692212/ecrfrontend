@@ -1,7 +1,89 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plane, MapPin, Mail, Phone, Facebook, Instagram, Twitter, Youtube, Linkedin } from 'lucide-react';
+import {
+  Plane,
+  MapPin,
+  Mail,
+  Phone,
+  Facebook,
+  Instagram,
+ Twitter,
+  Youtube,
+  Linkedin,
+  MapPinned,
+} from 'lucide-react';
+import { settingsAPI } from '@/lib/api';
+
+type SocialPlatform = 'facebook' | 'instagram' | 'twitter' | 'youtube' | 'linkedin';
+
+interface FooterContactInfo {
+  address: string;
+  email: string;
+  phone: string;
+  altPhone?: string;
+  mapEmbed?: string;
+  socialMedia: Record<SocialPlatform, string>;
+}
+
+const defaultContactInfo: FooterContactInfo = {
+  address: 'Madhuvana, Achalady, Brahmavar Tq, Udupi, Karnataka, Pin - 576225',
+  email: 'admission@ecredu.com',
+  phone: '+91 82777 55777',
+  altPhone: '+91 88677 12266',
+  mapEmbed: '',
+  socialMedia: {
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    youtube: '',
+    linkedin: '',
+  },
+};
+
+const socialIcons: Record<SocialPlatform, typeof Facebook> = {
+  facebook: Facebook,
+  instagram: Instagram,
+  twitter: Twitter,
+  youtube: Youtube,
+  linkedin: Linkedin,
+};
 
 const Footer = () => {
+  const [contactInfo, setContactInfo] = useState<FooterContactInfo>(defaultContactInfo);
+
+  useEffect(() => {
+    const loadFooterContact = async () => {
+      try {
+        const settings = await settingsAPI.getGroupPublic('contact');
+        const contactSetting = Array.isArray(settings)
+          ? settings.find((s: any) => s.key === 'contact.info' && s.value)
+          : null;
+
+        if (contactSetting?.value) {
+          const parsed = JSON.parse(contactSetting.value as string);
+          setContactInfo((prev) => ({
+            ...prev,
+            ...parsed,
+            socialMedia: {
+              ...prev.socialMedia,
+              ...(parsed?.socialMedia ?? {}),
+            },
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load footer contact info', error);
+      }
+    };
+
+    loadFooterContact();
+  }, []);
+
+  const mapUrl = useMemo(() => {
+    if (!contactInfo.mapEmbed) return '';
+    const match = contactInfo.mapEmbed.match(/src="([^"]+)"/i);
+    return match?.[1] ?? '';
+  }, [contactInfo.mapEmbed]);
+
   const quickLinks = [
     { name: 'Home', path: '/' },
     { name: 'About Us', path: '/about' },
@@ -22,13 +104,13 @@ const Footer = () => {
     { name: 'Nursing', path: '/courses' },
   ];
 
-  const socialLinks = [
-    { icon: Facebook, href: '#', label: 'Facebook' },
-    { icon: Instagram, href: '#', label: 'Instagram' },
-    { icon: Twitter, href: '#', label: 'Twitter' },
-    { icon: Youtube, href: '#', label: 'Youtube' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  ];
+  const socialLinks = Object.entries(contactInfo.socialMedia)
+    .filter(([, href]) => typeof href === 'string' && href.trim().length > 0)
+    .map(([platform, href]) => ({
+      icon: socialIcons[platform as SocialPlatform],
+      href,
+      label: platform.charAt(0).toUpperCase() + platform.slice(1),
+    }));
 
   return (
     <footer className="bg-card border-t border-border">
@@ -92,20 +174,48 @@ const Footer = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <span className="text-muted-foreground text-sm">
-                  Madhuvana, Achalady, Brahmavar Tq, Udupi, Karnataka, Pin - 576225
+                  {contactInfo.address}
+                  {mapUrl && (
+                    <span className="block mt-2">
+                      <a
+                        href={mapUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
+                      >
+                        <MapPinned className="w-3.5 h-3.5" />
+                        View on Map
+                      </a>
+                    </span>
+                  )}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0" />
-                <a href="mailto:admission@ecredu.com" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  admission@ecredu.com
+                <a
+                  href={`mailto:${contactInfo.email}`}
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                >
+                  {contactInfo.email}
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-primary flex-shrink-0" />
                 <div className="text-muted-foreground text-sm">
-                  <a href="tel:+918277755777" className="hover:text-primary transition-colors block">+91 82777 55777</a>
-                  <a href="tel:+918867712266" className="hover:text-primary transition-colors block">+91 88677 12266</a>
+                  <a
+                    href={`tel:${contactInfo.phone}`}
+                    className="hover:text-primary transition-colors block"
+                  >
+                    {contactInfo.phone}
+                  </a>
+                  {contactInfo.altPhone && (
+                    <a
+                      href={`tel:${contactInfo.altPhone}`}
+                      className="hover:text-primary transition-colors block"
+                    >
+                      {contactInfo.altPhone}
+                    </a>
+                  )}
                 </div>
               </li>
             </ul>
@@ -114,16 +224,20 @@ const Footer = () => {
             <div className="mt-6">
               <h5 className="text-sm font-semibold text-foreground mb-4">Follow Us</h5>
               <div className="flex gap-3">
-                {socialLinks.map((social) => (
-                  <a
-                    key={social.label}
-                    href={social.href}
-                    aria-label={social.label}
-                    className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <social.icon className="w-5 h-5" />
-                  </a>
-                ))}
+                {socialLinks.length > 0 ? (
+                  socialLinks.map((social) => (
+                    <a
+                      key={social.label}
+                      href={social.href}
+                      aria-label={social.label}
+                      className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"
+                    >
+                      <social.icon className="w-5 h-5" />
+                    </a>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground">No social links available</p>
+                )}
               </div>
             </div>
           </div>

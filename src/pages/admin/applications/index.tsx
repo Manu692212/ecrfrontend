@@ -46,6 +46,10 @@ export default function AdminApplicationsPage() {
   const [statusValue, setStatusValue] = useState<string>('new');
   const [notesValue, setNotesValue] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const formatFormType = (value?: string | null) => {
+    if (!value) return 'General';
+    return value.replace(/[-_]/g, ' ');
+  };
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -139,11 +143,12 @@ export default function AdminApplicationsPage() {
       typeof metadata['course'] === 'string' ? (metadata['course'] as string) : undefined;
     const message =
       typeof metadata['message'] === 'string' ? (metadata['message'] as string) : undefined;
+    const formTypeLabel = formatFormType(selectedDetails.form_type);
 
     return (
       <div className="space-y-4 text-sm">
         <p className="text-lg font-semibold text-foreground">
-          {selectedDetails.full_name} · {selectedDetails.form_type.replace('-', ' ')}
+          {selectedDetails.full_name || 'Applicant'} · {formTypeLabel}
         </p>
         <p className="text-muted-foreground">{selectedDetails.title || courseLabel || '—'}</p>
         <div className="grid gap-2 text-sm sm:grid-cols-2">
