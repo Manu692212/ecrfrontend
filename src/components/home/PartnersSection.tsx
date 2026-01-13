@@ -80,18 +80,26 @@ const PartnersSection = () => {
             <button
               onClick={prevSlide}
               className="flex-shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+              aria-label="Previous partners"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
             <div className="flex-1 overflow-hidden">
-              <div className="flex gap-6 transition-transform duration-500">
-                {getVisiblePartners().map((partner, index) => (
+              <div 
+                className="flex gap-6 transition-transform duration-500"
+                style={{
+                  transform: `translateX(-${currentIndex * (100 / slidesPerView + 4)}%)`,
+                  width: `${(partners.length / slidesPerView + 2) * (100 / slidesPerView)}%`,
+                }}
+              >
+                {/* Loop through all partners multiple times for seamless carousel */}
+                {[...partners, ...partners].map((partner, index) => (
                   <div
                     key={index}
                     className="flex-shrink-0 flex items-center justify-center rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-all"
                     style={{
-                      width: `calc((100% - ${(slidesPerView - 1) * 24}px) / ${slidesPerView})`,
+                      width: `${100 / slidesPerView}%`,
                       minHeight: '160px',
                     }}
                   >
@@ -109,6 +117,7 @@ const PartnersSection = () => {
             <button
               onClick={nextSlide}
               className="flex-shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+              aria-label="Next partners"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -123,6 +132,7 @@ const PartnersSection = () => {
                 className={`h-2 rounded-full transition-all ${
                   index === currentIndex ? 'bg-primary w-8' : 'bg-border w-2'
                 }`}
+                aria-label={`Go to partner ${index + 1}`}
               />
             ))}
           </div>
