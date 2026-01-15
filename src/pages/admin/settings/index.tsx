@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,13 @@ const SMTP_FIELDS = [
     label: 'Mailer',
     placeholder: 'smtp',
     description: 'transport driver name',
+  },
+  {
+    key: 'smtp.resend_api_key',
+    label: 'Resend API Key',
+    placeholder: 're_XXXXXXXXXXXX',
+    type: 'password',
+    description: 'Resend API key (required when using resend)',
   },
   {
     key: 'smtp.host',
@@ -87,6 +95,12 @@ const SMTP_FIELDS = [
     placeholder: 'Admissions Desk',
     description: 'Display name for notification recipient',
   },
+] as const;
+
+const MAILER_OPTIONS = [
+  { value: 'smtp', label: 'SMTP' },
+  { value: 'resend', label: 'Resend' },
+  { value: 'log', label: 'Log (disable sending)' },
 ] as const;
 
 type SmtpSettingKey = (typeof SMTP_FIELDS)[number]['key'];
@@ -233,7 +247,11 @@ export default function AdminSettingsPage() {
     try {
       await Promise.all(
         SMTP_FIELDS.map(async (field) => {
-          const value = smtpValues[field.key] ?? '';
+          let value = smtpValues[field.key] ?? '';
+          if (field.key === 'smtp.mailer') {
+            const normalized = value.trim();
+            value = normalized !== '' ? normalized : 'smtp';
+          }
           const existing = smtpSettingsMap[field.key];
 
           if (existing) {
@@ -394,17 +412,52 @@ export default function AdminSettingsPage() {
             <p className="text-sm text-muted-foreground">Loading SMTP settings...</p>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {SMTP_FIELDS.map((field) => (
-                <div key={field.key} className="space-y-2">
-                  <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{field.label}</label>
-                  <Input
-                    type={field.type ?? 'text'}
-                    value={smtpValues[field.key] ?? ''}
-                    onChange={(event) => handleSmtpInputChange(field.key, event.target.value)}
-                    placeholder={field.placeholder}
-                  />
-                </div>
-              ))}
+              {SMTP_FIELDS.map((field) => {
+                const activeMailer = (smtpValues['smtp.mailer'] ?? '').trim() || 'smtp';
+
+                const smtpOnlyKeys: SmtpSettingKey[] = [
+                  'smtp.host',
+                  'smtp.port',
+                  'smtp.username',
+                  'smtp.password',
+                  'smtp.encryption',
+                ];
+
+                if (smtpOnlyKeys.includes(field.key) && activeMailer !== 'smtp') {
+                  return null;
+                }
+
+                if (field.key === 'smtp.resend_api_key' && activeMailer !== 'resend') {
+                  return null;
+                }
+
+                return (
+                  <div key={field.key} className="space-y-2">
+                    <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{field.label}</label>
+                    {field.key === 'smtp.mailer' ? (
+                      <Select value={activeMailer} onValueChange={(value) => handleSmtpInputChange('smtp.mailer', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select provider" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MAILER_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type={field.type ?? 'text'}
+                        value={smtpValues[field.key] ?? ''}
+                        onChange={(event) => handleSmtpInputChange(field.key, event.target.value)}
+                        placeholder={field.placeholder}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
