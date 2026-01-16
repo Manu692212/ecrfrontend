@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Layout from '@/components/layout/Layout';
+import SocialLinks from '@/components/common/SocialLinks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +22,9 @@ interface ContactContent {
     twitter?: string;
     linkedin?: string;
     instagram?: string;
+    youtube?: string;
   };
+  youtube?: string;
 }
 
 const defaultContact: ContactContent = {
@@ -36,6 +39,30 @@ const defaultContact: ContactContent = {
   socialMedia: {},
 };
 
+const extractMapSrc = (embed?: string) => {
+  if (!embed) return '';
+  const match = embed.match(/src="([^"]+)"/i);
+  return match?.[1] ?? '';
+};
+
+const buildResponsiveMapEmbed = (src?: string) => {
+  if (!src) return '';
+  return `<iframe src="${src}" style="border:0;width:100%;height:100%;pointer-events:none;" loading="lazy" allowfullscreen="" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+};
+
+const buildDirectionUrl = (mapSrc: string, fallbackAddress: string) => {
+  if (mapSrc) {
+    if (mapSrc.includes('/maps/embed')) {
+      return mapSrc.replace('/embed', '');
+    }
+    return mapSrc;
+  }
+  if (fallbackAddress) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackAddress)}`;
+  }
+  return 'https://maps.google.com';
+};
+
 const Contact = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -46,6 +73,13 @@ const Contact = () => {
     message: '',
   });
   const [contactContent, setContactContent] = useState<ContactContent>(defaultContact);
+
+  const mapSrc = useMemo(() => extractMapSrc(contactContent.mapEmbed), [contactContent.mapEmbed]);
+  const mapEmbedHtml = useMemo(() => buildResponsiveMapEmbed(mapSrc), [mapSrc]);
+  const directionUrl = useMemo(
+    () => buildDirectionUrl(mapSrc, contactContent.address),
+    [mapSrc, contactContent.address]
+  );
 
   useEffect(() => {
     const loadContactContent = async () => {
@@ -212,11 +246,25 @@ const Contact = () => {
 
             {/* Map Placeholder */}
             <div className="bg-card rounded-3xl border border-border overflow-hidden">
-              {contactContent.mapEmbed ? (
-                <div
-                  className="min-h-[400px]"
-                  dangerouslySetInnerHTML={{ __html: contactContent.mapEmbed }}
-                />
+              {mapEmbedHtml ? (
+                <a
+                  href={directionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative block"
+                >
+                  <div className="aspect-video">
+                    <div
+                      className="h-full w-full pointer-events-none"
+                      dangerouslySetInnerHTML={{ __html: mapEmbedHtml }}
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none" />
+                  <span className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-white drop-shadow">
+                    <MapPin className="w-4 h-4" />
+                    Open in Google Maps
+                  </span>
+                </a>
               ) : (
                 <div className="h-full min-h-[400px] bg-gradient-to-br from-secondary to-muted flex items-center justify-center">
                   <div className="text-center p-8">
@@ -230,31 +278,14 @@ const Contact = () => {
                   </div>
                 </div>
               )}
-              {(contactContent.socialMedia.facebook ||
-                contactContent.socialMedia.twitter ||
-                contactContent.socialMedia.linkedin ||
-                contactContent.socialMedia.instagram) && (
-                <div className="border-t border-border px-6 py-4 flex flex-wrap gap-4 text-sm">
-                  {contactContent.socialMedia.facebook && (
-                    <a href={contactContent.socialMedia.facebook} className="text-primary hover:underline">
-                      Facebook
-                    </a>
-                  )}
-                  {contactContent.socialMedia.twitter && (
-                    <a href={contactContent.socialMedia.twitter} className="text-primary hover:underline">
-                      Twitter
-                    </a>
-                  )}
-                  {contactContent.socialMedia.linkedin && (
-                    <a href={contactContent.socialMedia.linkedin} className="text-primary hover:underline">
-                      LinkedIn
-                    </a>
-                  )}
-                  {contactContent.socialMedia.instagram && (
-                    <a href={contactContent.socialMedia.instagram} className="text-primary hover:underline">
-                      Instagram
-                    </a>
-                  )}
+              {Object.values(contactContent.socialMedia).some((value) => (value ?? '').trim().length > 0) && (
+                <div className="border-t border-border px-6 py-4">
+                  <SocialLinks
+                    socialMedia={contactContent.socialMedia}
+                    className="flex-wrap gap-4"
+                    buttonClassName="bg-transparent border border-border hover:bg-primary text-primary hover:text-primary-foreground"
+                    iconClassName="w-4 h-4"
+                  />
                 </div>
               )}
             </div>

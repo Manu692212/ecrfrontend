@@ -1,20 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Plane,
-  MapPin,
-  Mail,
-  Phone,
-  Facebook,
-  Instagram,
- Twitter,
-  Youtube,
-  Linkedin,
-  MapPinned,
-} from 'lucide-react';
+import { Plane, MapPin, Mail, Phone, MapPinned } from 'lucide-react';
 import { settingsAPI } from '@/lib/api';
-
-type SocialPlatform = 'facebook' | 'instagram' | 'twitter' | 'youtube' | 'linkedin';
+import SocialLinks from '@/components/common/SocialLinks';
 
 interface FooterContactInfo {
   address: string;
@@ -22,7 +10,13 @@ interface FooterContactInfo {
   phone: string;
   altPhone?: string;
   mapEmbed?: string;
-  socialMedia: Record<SocialPlatform, string>;
+  socialMedia: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    youtube?: string;
+    linkedin?: string;
+  };
 }
 
 const defaultContactInfo: FooterContactInfo = {
@@ -40,16 +34,32 @@ const defaultContactInfo: FooterContactInfo = {
   },
 };
 
-const socialIcons: Record<SocialPlatform, typeof Facebook> = {
-  facebook: Facebook,
-  instagram: Instagram,
-  twitter: Twitter,
-  youtube: Youtube,
-  linkedin: Linkedin,
+const extractMapSrc = (embed?: string) => {
+  if (!embed) return '';
+  const match = embed.match(/src="([^"]+)"/i);
+  return match?.[1] ?? '';
+};
+
+const buildDirectionUrl = (mapSrc: string, fallbackAddress: string) => {
+  if (mapSrc) {
+    if (mapSrc.includes('/maps/embed')) {
+      return mapSrc.replace('/embed', '');
+    }
+    return mapSrc;
+  }
+  if (fallbackAddress) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackAddress)}`;
+  }
+  return 'https://maps.google.com';
 };
 
 const Footer = () => {
   const [contactInfo, setContactInfo] = useState<FooterContactInfo>(defaultContactInfo);
+  const mapSrc = useMemo(() => extractMapSrc(contactInfo.mapEmbed), [contactInfo.mapEmbed]);
+  const directionUrl = useMemo(
+    () => buildDirectionUrl(mapSrc, contactInfo.address),
+    [mapSrc, contactInfo.address]
+  );
 
   useEffect(() => {
     const loadFooterContact = async () => {
@@ -78,12 +88,6 @@ const Footer = () => {
     loadFooterContact();
   }, []);
 
-  const mapUrl = useMemo(() => {
-    if (!contactInfo.mapEmbed) return '';
-    const match = contactInfo.mapEmbed.match(/src="([^"]+)"/i);
-    return match?.[1] ?? '';
-  }, [contactInfo.mapEmbed]);
-
   const quickLinks = [
     { name: 'Home', path: '/' },
     { name: 'About Us', path: '/about' },
@@ -103,14 +107,6 @@ const Footer = () => {
     { name: 'Paramedical', path: '/courses' },
     { name: 'Nursing', path: '/courses' },
   ];
-
-  const socialLinks = Object.entries(contactInfo.socialMedia)
-    .filter(([, href]) => typeof href === 'string' && href.trim().length > 0)
-    .map(([platform, href]) => ({
-      icon: socialIcons[platform as SocialPlatform],
-      href,
-      label: platform.charAt(0).toUpperCase() + platform.slice(1),
-    }));
 
   return (
     <footer className="bg-card border-t border-border">
@@ -168,27 +164,40 @@ const Footer = () => {
           </div>
 
           {/* Contact Info */}
-          <div>
-            <h4 className="font-display text-lg font-semibold text-foreground mb-6">Contact Us</h4>
-            <ul className="space-y-4">
+          <div className="space-y-4">
+            <h4 className="font-display text-lg font-semibold text-foreground">Contact Us</h4>
+            <div className="rounded-2xl border border-border overflow-hidden">
+              {mapSrc ? (
+                <a
+                  href={directionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block group"
+                >
+                  <div className="aspect-video bg-muted">
+                    <iframe
+                      src={mapSrc}
+                      title="ECR map"
+                      className="w-full h-full border-0 pointer-events-none"
+                      loading="lazy"
+                      allowFullScreen
+                    />
+                  </div>
+                  <div className="px-4 py-3 bg-background flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-muted-foreground group-hover:text-primary">
+                    <span>View Directions</span>
+                    <MapPinned className="w-4 h-4" />
+                  </div>
+                </a>
+              ) : (
+                <div className="p-4 text-sm text-muted-foreground">
+                  Map information coming soon.
+                </div>
+              )}
+            </div>
+            <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground text-sm">
-                  {contactInfo.address}
-                  {mapUrl && (
-                    <span className="block mt-2">
-                      <a
-                        href={mapUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
-                      >
-                        <MapPinned className="w-3.5 h-3.5" />
-                        View on Map
-                      </a>
-                    </span>
-                  )}
-                </span>
+                <span className="text-muted-foreground text-sm">{contactInfo.address}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0" />
@@ -213,24 +222,9 @@ const Footer = () => {
             </ul>
 
             {/* Social Links */}
-            <div className="mt-6">
+            <div className="pt-4">
               <h5 className="text-sm font-semibold text-foreground mb-4">Follow Us</h5>
-              <div className="flex gap-3">
-                {socialLinks.length > 0 ? (
-                  socialLinks.map((social) => (
-                    <a
-                      key={social.label}
-                      href={social.href}
-                      aria-label={social.label}
-                      className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"
-                    >
-                      <social.icon className="w-5 h-5" />
-                    </a>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">No social links available</p>
-                )}
-              </div>
+              <SocialLinks socialMedia={contactInfo.socialMedia} />
             </div>
           </div>
         </div>

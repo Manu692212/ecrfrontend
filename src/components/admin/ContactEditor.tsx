@@ -20,6 +20,7 @@ interface ContactData {
     twitter: string;
     linkedin: string;
     instagram: string;
+    youtube: string;
   };
 }
 
@@ -36,7 +37,8 @@ const ContactEditor = () => {
       facebook: 'https://facebook.com/ecracademy',
       twitter: 'https://twitter.com/ecracademy',
       linkedin: 'https://linkedin.com/company/ecracademy',
-      instagram: 'https://instagram.com/ecracademy'
+      instagram: 'https://instagram.com/ecracademy',
+      youtube: 'https://youtube.com/@ecracademy'
     }
   });
 
@@ -271,6 +273,14 @@ const ContactEditor = () => {
                     placeholder="Enter Instagram URL"
                   />
                 </div>
+                <div>
+                  <Label>Youtube</Label>
+                  <Input
+                    value={contactData.socialMedia.youtube}
+                    onChange={(e) => updateSocialMedia('youtube', e.target.value)}
+                    placeholder="Enter Youtube URL"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -336,6 +346,9 @@ const ContactEditor = () => {
                 </a>
                 <a href={contactData.socialMedia.instagram} className="text-primary hover:underline">
                   Instagram
+                </a>
+                <a href={contactData.socialMedia.youtube} className="text-primary hover:underline">
+                  Youtube
                 </a>
               </div>
             </div>
