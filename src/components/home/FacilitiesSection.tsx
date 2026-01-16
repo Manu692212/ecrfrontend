@@ -8,6 +8,16 @@ const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
 const MEDIA_STORAGE_BASE_URL = `${MEDIA_ORIGIN}/storage`;
 const MEDIA_MEDIA_BASE_URL = `${MEDIA_ORIGIN}/media`;
 
+const FACILITY_DESCRIPTION_PLACEHOLDER = 'Description not provided';
+
+const normalizeFacilityDescription = (value?: string | null) => {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed === FACILITY_DESCRIPTION_PLACEHOLDER) {
+    return undefined;
+  }
+  return trimmed;
+};
+
 type FacilityRecord = {
   id: string;
   name: string;
@@ -72,7 +82,7 @@ const mapFacilitiesResponse = (payload: any): FacilityRecord[] => {
     id: String(item?.id ?? `facility-${index}`),
     name: item?.name ?? 'Campus Facility',
     label: item?.label ?? undefined,
-    description: item?.description ?? undefined,
+    description: normalizeFacilityDescription(item?.description),
     category: item?.category ?? undefined,
     image: resolveFacilityImage(item),
     order: typeof item?.order === 'number' ? item.order : undefined,
