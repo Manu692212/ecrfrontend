@@ -5,6 +5,8 @@ import { Plane, GraduationCap, Users, Award } from 'lucide-react';
 import { ArrowRight } from 'lucide-react';
 import { settingsAPI } from '@/lib/api';
 
+const HERO_IMAGE = '/ecr-campus-aerial.webp';
+
 interface HeroData {
   mainHeading: string;
   subHeading: string;
@@ -160,7 +162,15 @@ const HeroSection = () => {
           </div>
 
           <div className="relative">
-            <div className="aspect-[4/3] rounded-[32px] overflow-hidden bg-gradient-to-tr from-slate-900/80 via-slate-800/60 to-slate-900/20 shadow-2xl" />
+            <div className="aspect-[4/3] rounded-[32px] overflow-hidden bg-slate-950 shadow-2xl">
+              <img
+                src={HERO_IMAGE}
+                alt="Aerial view of the ECR Group of Institutions campus"
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/40 via-transparent to-white/10" />
+            </div>
             <div className="absolute -bottom-6 -left-6 max-w-xs rounded-3xl border border-border bg-background p-6 shadow-xl">
               <p className="text-sm text-muted-foreground">Why students choose ECR</p>
               <p className="font-display text-3xl font-bold text-foreground">100% Placement</p>
