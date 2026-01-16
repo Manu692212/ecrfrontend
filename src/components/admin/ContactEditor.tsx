@@ -30,14 +30,70 @@ const extractMapSrc = (input?: string) => {
   return match?.[1] ?? '';
 };
 
-const buildMapEmbedMarkup = (input: string) => {
+const deriveEmbedSrcFromUrl = (rawUrl: string, fallbackQuery?: string) => {
+  try {
+    const url = new URL(rawUrl);
+    const isGoogleMapsHost =
+      url.hostname.includes('google.com') ||
+      url.hostname.includes('google.co') ||
+      url.hostname.includes('googleapis.com') ||
+      url.hostname.includes('maps.app.goo.gl');
+
+    if (isGoogleMapsHost) {
+      if (url.pathname.includes('/maps/embed')) {
+        return rawUrl;
+      }
+
+      const queryParam =
+        url.searchParams.get('q') ||
+        url.searchParams.get('query') ||
+        url.searchParams.get('destination');
+
+      if (queryParam) {
+        return `https://www.google.com/maps?q=${encodeURIComponent(queryParam)}&output=embed`;
+      }
+
+      const placeMatch = url.pathname.match(/\/place\/([^/]+)/);
+      if (placeMatch?.[1]) {
+        const decoded = decodeURIComponent(placeMatch[1]).replace(/\+/g, ' ');
+        return `https://www.google.com/maps?q=${encodeURIComponent(decoded)}&output=embed`;
+      }
+
+      const coordsMatch = url.pathname.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+      if (coordsMatch) {
+        return `https://www.google.com/maps?q=${encodeURIComponent(`${coordsMatch[1]},${coordsMatch[2]}`)}&output=embed`;
+      }
+
+      if (url.hash.includes('q=')) {
+        const hashQuery = url.hash.split('q=')[1]?.split('&')[0];
+        if (hashQuery) {
+          return `https://www.google.com/maps?q=${encodeURIComponent(decodeURIComponent(hashQuery))}&output=embed`;
+        }
+      }
+
+      if (fallbackQuery) {
+        return `https://www.google.com/maps?q=${encodeURIComponent(fallbackQuery)}&output=embed`;
+      }
+
+      return `https://www.google.com/maps?q=${encodeURIComponent(rawUrl)}&output=embed`;
+    }
+  } catch {
+    // not a URL
+  }
+
+  const safeQuery = fallbackQuery || rawUrl;
+  return `https://www.google.com/maps?q=${encodeURIComponent(safeQuery)}&output=embed`;
+};
+
+const buildMapEmbedMarkup = (input: string, fallbackQuery?: string) => {
   const trimmed = input?.trim();
   if (!trimmed) return '';
   if (trimmed.toLowerCase().includes('<iframe')) {
     return trimmed;
   }
   if (/^https?:\/\//i.test(trimmed)) {
-    return `<iframe src="${trimmed}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+    const embedSrc = deriveEmbedSrcFromUrl(trimmed, fallbackQuery);
+    return `<iframe src="${embedSrc}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
   }
   return trimmed;
 };
@@ -102,7 +158,7 @@ const ContactEditor = () => {
     setMapInput(value);
     setContactData((prev) => ({
       ...prev,
-      mapEmbed: buildMapEmbedMarkup(value),
+      mapEmbed: buildMapEmbedMarkup(value, prev.address),
     }));
   };
 
