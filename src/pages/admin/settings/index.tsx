@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -26,7 +27,28 @@ interface Setting {
   is_public: boolean;
 }
 
-const SMTP_FIELDS = [
+type SmtpFieldKey =
+  | 'smtp.mailer'
+  | 'smtp.resend_api_key'
+  | 'smtp.host'
+  | 'smtp.port'
+  | 'smtp.username'
+  | 'smtp.password'
+  | 'smtp.encryption'
+  | 'smtp.from_address'
+  | 'smtp.from_name'
+  | 'smtp.recipient_address'
+  | 'smtp.recipient_name';
+
+type SmtpFieldConfig = {
+  key: SmtpFieldKey;
+  label: string;
+  placeholder?: string;
+  description?: string;
+  type?: 'text' | 'password';
+};
+
+const SMTP_FIELDS: SmtpFieldConfig[] = [
   {
     key: 'smtp.mailer',
     label: 'Mailer',
@@ -103,9 +125,7 @@ const MAILER_OPTIONS = [
   { value: 'log', label: 'Log (disable sending)' },
 ] as const;
 
-type SmtpSettingKey = (typeof SMTP_FIELDS)[number]['key'];
-
-const SMTP_KEYS: SmtpSettingKey[] = SMTP_FIELDS.map((field) => field.key);
+const SMTP_KEYS: SmtpFieldKey[] = SMTP_FIELDS.map((field) => field.key);
 
 const buildInitialSmtpValues = () =>
   SMTP_FIELDS.reduce(
@@ -113,7 +133,7 @@ const buildInitialSmtpValues = () =>
       acc[field.key] = '';
       return acc;
     },
-    {} as Record<SmtpSettingKey, string>
+    {} as Record<SmtpFieldKey, string>
   );
 
 const BadgeForGroup = ({ group }: { group: string }) => {
@@ -131,6 +151,7 @@ export default function AdminSettingsPage() {
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [meta, setMeta] = useState<{ current_page: number; last_page: number }>({ current_page: 1, last_page: 1 });
+  const [activeTab, setActiveTab] = useState<'password' | 'email'>('password');
   const [passwordStep, setPasswordStep] = useState<'idle' | 'otp_sent' | 'success'>('idle');
   const [passwordOtpToken, setPasswordOtpToken] = useState('');
   const [passwordOtpCode, setPasswordOtpCode] = useState('');
@@ -138,12 +159,18 @@ export default function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
-  const [smtpValues, setSmtpValues] = useState<Record<SmtpSettingKey, string>>(buildInitialSmtpValues);
-  const [smtpSettingsMap, setSmtpSettingsMap] = useState<Partial<Record<SmtpSettingKey, Setting>>>({});
+  const [smtpValues, setSmtpValues] = useState<Record<SmtpFieldKey, string>>(buildInitialSmtpValues);
+  const [smtpSettingsMap, setSmtpSettingsMap] = useState<Partial<Record<SmtpFieldKey, Setting>>>({});
   const [smtpLoading, setSmtpLoading] = useState(true);
   const [smtpSaving, setSmtpSaving] = useState(false);
   const [smtpError, setSmtpError] = useState<string | null>(null);
   const [smtpMessage, setSmtpMessage] = useState<string | null>(null);
+  const [emailStep, setEmailStep] = useState<'idle' | 'otp_sent' | 'success'>('idle');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailOtpToken, setEmailOtpToken] = useState('');
+  const [emailOtpCode, setEmailOtpCode] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailMessage, setEmailMessage] = useState<string | null>(null);
   const { refreshSession } = useAuth();
 
   const fetchSettings = async (pageNumber = 1) => {
@@ -163,7 +190,68 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const requestEmailChangeOtp = async () => {
+    if (!newEmail) {
+      setEmailMessage('Please enter the new email before requesting an OTP.');
+      return;
+    }
+
+    setEmailMessage(null);
+    setEmailStep('idle');
+    setEmailLoading(true);
+    try {
+      const response = await authAPI.requestEmailChangeOtp({ new_email: newEmail });
+      if (response?.otp_token) {
+        setEmailOtpToken(response.otp_token);
+        setEmailStep('otp_sent');
+        setEmailMessage('OTP sent to the new email. Enter it below to confirm the change.');
+      } else {
+        setEmailMessage(response?.message || 'OTP request sent. Check your new email.');
+      }
+    } catch (err: any) {
+      setEmailMessage(err?.message || 'Unable to send OTP. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const verifyEmailChange = async () => {
+    if (!emailOtpToken) return;
+    setEmailLoading(true);
+    setEmailMessage(null);
+    try {
+      const response = await authAPI.changeEmailWithOtp({
+        otp_token: emailOtpToken,
+        code: emailOtpCode,
+        new_email: newEmail,
+      });
+
+      if (response?.token && response?.admin) {
+        refreshSession(response.token, response.admin);
+      }
+
+      setEmailStep('success');
+      setEmailMessage('Email updated successfully.');
+      setEmailOtpCode('');
+      setNewEmail(response?.admin?.email ?? newEmail);
+    } catch (err: any) {
+      setEmailMessage(err?.message || 'Failed to update email. Please verify the OTP and try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   const requestPasswordChangeOtp = async () => {
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordMessage('Please enter a new password with at least 8 characters before requesting an OTP.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage('New password and confirmation must match before requesting an OTP.');
+      return;
+    }
+
     setPasswordMessage(null);
     setPasswordStep('idle');
     setPasswordLoading(true);
@@ -473,8 +561,8 @@ export default function AdminSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-          <CardDescription>Secure your admin account with an OTP-protected password update.</CardDescription>
+          <CardTitle>Account Security</CardTitle>
+          <CardDescription>Manage password and email using OTP-backed verification.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {passwordMessage && (
@@ -489,73 +577,161 @@ export default function AdminSettingsPage() {
             </div>
           )}
 
-          {passwordStep !== 'otp_sent' && passwordStep !== 'success' && (
-            <Button onClick={requestPasswordChangeOtp} disabled={passwordLoading}>
-              {passwordLoading ? 'Sending OTP…' : 'Send OTP to email'}
-            </Button>
-          )}
-
-          {passwordStep === 'otp_sent' && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">OTP Code</p>
-                <InputOTP maxLength={6} value={passwordOtpCode} onChange={setPasswordOtpCode}>
-                  <InputOTPGroup className="gap-2">
-                    {[0, 1, 2, 3, 4, 5].map((slot) => (
-                      <InputOTPSlot key={slot} index={slot} className="h-11 w-11 text-lg" />
-                    ))}
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">New Password</label>
-                  <Input
-                    type="password"
-                    value={newPassword}
-                    onChange={(event) => setNewPassword(event.target.value)}
-                    placeholder="Enter new password"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Confirm Password
-                  </label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    placeholder="Confirm new password"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={verifyPasswordChange}
-                  disabled={
-                    passwordLoading ||
-                    passwordOtpCode.length !== 6 ||
-                    !newPassword ||
-                    newPassword.length < 8 ||
-                    newPassword !== confirmPassword
-                  }
-                >
-                  {passwordLoading ? 'Updating…' : 'Verify & Update Password'}
-                </Button>
-                <Button variant="ghost" onClick={() => setPasswordStep('idle')} disabled={passwordLoading}>
-                  Cancel
-                </Button>
-              </div>
+          {emailMessage && activeTab === 'email' && (
+            <div
+              className={`rounded-md border p-3 text-sm ${
+                emailStep === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : 'border-blue-200 bg-blue-50 text-blue-800'
+              }`}
+            >
+              {emailMessage}
             </div>
           )}
 
-          {passwordStep === 'success' && (
-            <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-              Password changed successfully. Use your new password for the next login.
-            </div>
-          )}
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'password' | 'email')}>
+            <TabsList>
+              <TabsTrigger value="password">Password</TabsTrigger>
+              <TabsTrigger value="email">Email</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="password">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">Step 1: Set new password</p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">New Password</label>
+                      <Input
+                        type="password"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                        placeholder="Enter new password"
+                        disabled={passwordStep === 'success'}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Confirm Password</label>
+                      <Input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        placeholder="Confirm new password"
+                        disabled={passwordStep === 'success'}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {passwordStep !== 'success' && (
+                  <Button
+                    onClick={requestPasswordChangeOtp}
+                    disabled={passwordLoading || passwordStep === 'otp_sent'}
+                    variant="outline"
+                  >
+                    {passwordLoading ? 'Sending OTP…' : 'Step 2: Send OTP to email'}
+                  </Button>
+                )}
+              </div>
+
+              {passwordStep === 'otp_sent' && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">Step 3: Enter OTP</p>
+                    <InputOTP maxLength={6} value={passwordOtpCode} onChange={setPasswordOtpCode}>
+                      <InputOTPGroup className="gap-2">
+                        {[0, 1, 2, 3, 4, 5].map((slot) => (
+                          <InputOTPSlot key={slot} index={slot} className="h-11 w-11 text-lg" />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={verifyPasswordChange}
+                      disabled={
+                        passwordLoading ||
+                        passwordOtpCode.length !== 6 ||
+                        !newPassword ||
+                        newPassword.length < 8 ||
+                        newPassword !== confirmPassword
+                      }
+                    >
+                      {passwordLoading ? 'Updating…' : 'Verify & Update Password'}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setPasswordStep('idle')} disabled={passwordLoading}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {passwordStep === 'success' && (
+                <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                  Password changed successfully. Use your new password for the next login.
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="email">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Step 1: New Email</label>
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(event) => setNewEmail(event.target.value)}
+                    placeholder="Enter new email"
+                    disabled={emailStep === 'success'}
+                  />
+                </div>
+
+                {emailStep !== 'success' && (
+                  <Button
+                    onClick={requestEmailChangeOtp}
+                    disabled={emailLoading || emailStep === 'otp_sent'}
+                    variant="outline"
+                  >
+                    {emailLoading ? 'Sending OTP…' : 'Step 2: Send OTP to new email'}
+                  </Button>
+                )}
+              </div>
+
+              {emailStep === 'otp_sent' && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">Step 3: Enter OTP</p>
+                    <InputOTP maxLength={6} value={emailOtpCode} onChange={setEmailOtpCode}>
+                      <InputOTPGroup className="gap-2">
+                        {[0, 1, 2, 3, 4, 5].map((slot) => (
+                          <InputOTPSlot key={slot} index={slot} className="h-11 w-11 text-lg" />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={verifyEmailChange}
+                      disabled={emailLoading || emailOtpCode.length !== 6 || !newEmail}
+                    >
+                      {emailLoading ? 'Updating…' : 'Verify & Update Email'}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setEmailStep('idle')} disabled={emailLoading}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {emailStep === 'success' && (
+                <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                  Email updated successfully. Use the new email for the next login.
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 

@@ -198,6 +198,12 @@ export const authAPI = {
   changePasswordWithOtp: async (payload: { otp_token: string; code: string; password: string; password_confirmation: string }) => {
     return api.post('/admins/password-change/verify', payload);
   },
+  requestEmailChangeOtp: async (payload: { new_email: string }) => {
+    return api.post('/admins/email-change/request-otp', payload);
+  },
+  changeEmailWithOtp: async (payload: { otp_token: string; code: string; new_email: string }) => {
+    return api.post('/admins/email-change/verify', payload);
+  },
 };
 
 export const publicAPI = {

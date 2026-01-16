@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const location = useLocation();
+  const { isAuthenticated, logout } = useAuth();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -55,6 +57,18 @@ const Header = () => {
                 Apply Now
               </Button>
             </Link>
+            {isAuthenticated && (
+              <>
+                <Link to="/admin">
+                  <Button variant="outline" size="lg">
+                    Admin
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="lg" onClick={logout}>
+                  Logout
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -89,6 +103,25 @@ const Header = () => {
                   Apply Now
                 </Button>
               </Link>
+              {isAuthenticated && (
+                <>
+                  <Link to="/admin" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full mt-2">
+                      Admin
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    className="w-full mt-1"
+                    onClick={() => {
+                      setIsOpen(false);
+                      logout();
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
