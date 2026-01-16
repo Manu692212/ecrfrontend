@@ -247,24 +247,23 @@ const Contact = () => {
             {/* Map Placeholder */}
             <div className="bg-card rounded-3xl border border-border overflow-hidden">
               {mapEmbedHtml ? (
-                <a
-                  href={directionUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative block"
-                >
-                  <div className="aspect-video">
+                <>
+                  <div className="aspect-video relative">
                     <div
-                      className="h-full w-full pointer-events-none"
+                      className="absolute inset-0"
                       dangerouslySetInnerHTML={{ __html: mapEmbedHtml }}
                     />
                   </div>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none" />
-                  <span className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-white drop-shadow">
-                    <MapPin className="w-4 h-4" />
-                    Open in Google Maps
-                  </span>
-                </a>
+                  <div className="border-t border-border px-6 py-4 bg-muted/20 flex justify-between items-center">
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Campus Map</p>
+                    <Button asChild size="sm" variant="outline">
+                      <a href={directionUrl} target="_blank" rel="noopener noreferrer">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Open in Google Maps
+                      </a>
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <div className="h-full min-h-[400px] bg-gradient-to-br from-secondary to-muted flex items-center justify-center">
                   <div className="text-center p-8">

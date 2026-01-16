@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,6 +24,26 @@ interface ContactData {
   };
 }
 
+const extractMapSrc = (input?: string) => {
+  if (!input) return '';
+  const match = input.match(/src="([^"]+)"/i);
+  return match?.[1] ?? '';
+};
+
+const buildMapEmbedMarkup = (input: string) => {
+  const trimmed = input?.trim();
+  if (!trimmed) return '';
+  if (trimmed.toLowerCase().includes('<iframe')) {
+    return trimmed;
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return `<iframe src="${trimmed}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+  }
+  return trimmed;
+};
+
+const deriveMapInputValue = (value: string) => extractMapSrc(value) || value || '';
+
 const ContactEditor = () => {
   const [contactData, setContactData] = useState<ContactData>({
     title: "Get in Touch",
@@ -46,6 +66,7 @@ const ContactEditor = () => {
   const [settingId, setSettingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mapInput, setMapInput] = useState<string>(() => deriveMapInputValue(contactData.mapEmbed));
 
   useEffect(() => {
     const loadContact = async () => {
@@ -55,7 +76,7 @@ const ContactEditor = () => {
         if (setting?.value) {
           setSettingId(String(setting.id));
           const parsed = JSON.parse(setting.value);
-          setContactData(prev => ({
+          setContactData((prev) => ({
             ...prev,
             ...parsed,
             socialMedia: parsed.socialMedia ? { ...prev.socialMedia, ...parsed.socialMedia } : prev.socialMedia,
@@ -72,6 +93,18 @@ const ContactEditor = () => {
 
     loadContact();
   }, []);
+
+  useEffect(() => {
+    setMapInput(deriveMapInputValue(contactData.mapEmbed));
+  }, [contactData.mapEmbed]);
+
+  const handleMapInputChange = (value: string) => {
+    setMapInput(value);
+    setContactData((prev) => ({
+      ...prev,
+      mapEmbed: buildMapEmbedMarkup(value),
+    }));
+  };
 
   const handleSave = async () => {
     setError(null);
@@ -229,11 +262,11 @@ const ContactEditor = () => {
             </div>
 
             <div>
-              <Label>Google Maps Embed Code</Label>
+              <Label>Google Maps Link or Embed Code</Label>
               <Textarea
-                value={contactData.mapEmbed}
-                onChange={(e) => updateField('mapEmbed', e.target.value)}
-                placeholder="Paste Google Maps embed iframe code"
+                value={mapInput}
+                onChange={(e) => handleMapInputChange(e.target.value)}
+                placeholder="Paste Google Maps link (Share > Embed > Copy link) or the iframe code"
                 rows={3}
               />
             </div>
@@ -325,10 +358,16 @@ const ContactEditor = () => {
 
               <div>
                 <h4 className="font-medium mb-2">Find Us</h4>
-                <div 
-                  className="border rounded-lg overflow-hidden"
-                  dangerouslySetInnerHTML={{ __html: contactData.mapEmbed }}
-                />
+                {contactData.mapEmbed ? (
+                  <div
+                    className="border rounded-lg overflow-hidden"
+                    dangerouslySetInnerHTML={{ __html: contactData.mapEmbed }}
+                  />
+                ) : (
+                  <div className="p-4 border rounded-lg text-sm text-muted-foreground">
+                    Map preview will appear here once a Google Maps link or embed code is provided.
+                  </div>
+                )}
               </div>
             </div>
 

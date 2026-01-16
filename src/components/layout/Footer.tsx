@@ -168,12 +168,7 @@ const Footer = () => {
             <h4 className="font-display text-lg font-semibold text-foreground">Contact Us</h4>
             <div className="rounded-2xl border border-border overflow-hidden">
               {mapSrc ? (
-                <a
-                  href={directionUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block group"
-                >
+                <>
                   <div className="aspect-video bg-muted">
                     <iframe
                       src={mapSrc}
@@ -183,11 +178,19 @@ const Footer = () => {
                       allowFullScreen
                     />
                   </div>
-                  <div className="px-4 py-3 bg-background flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-muted-foreground group-hover:text-primary">
+                  <div className="px-4 py-3 bg-background flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     <span>View Directions</span>
-                    <MapPinned className="w-4 h-4" />
+                    <a
+                      href={directionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary hover:underline"
+                    >
+                      <MapPinned className="w-4 h-4" />
+                      Open Maps
+                    </a>
                   </div>
-                </a>
+                </>
               ) : (
                 <div className="p-4 text-sm text-muted-foreground">
                   Map information coming soon.
