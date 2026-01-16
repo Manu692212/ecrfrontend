@@ -57,18 +57,6 @@ const Header = () => {
                 Apply Now
               </Button>
             </Link>
-            {isAuthenticated && (
-              <>
-                <Link to="/admin">
-                  <Button variant="outline" size="lg">
-                    Admin
-                  </Button>
-                </Link>
-                <Button variant="ghost" size="lg" onClick={logout}>
-                  Logout
-                </Button>
-              </>
-            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -103,25 +91,6 @@ const Header = () => {
                   Apply Now
                 </Button>
               </Link>
-              {isAuthenticated && (
-                <>
-                  <Link to="/admin" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full mt-2">
-                      Admin
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    className="w-full mt-1"
-                    onClick={() => {
-                      setIsOpen(false);
-                      logout();
-                    }}
-                  >
-                    Logout
-                  </Button>
-                </>
-              )}
             </div>
           </div>
         )}
