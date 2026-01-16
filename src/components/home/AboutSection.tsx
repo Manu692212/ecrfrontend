@@ -88,7 +88,14 @@ const AboutSection = () => {
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/30 via-transparent to-white/5" />
+                <div className="absolute inset-0">
+                  <img
+                    src="/campus.webp"
+                    alt="ECR campus overlay"
+                    className="h-full w-full object-cover opacity-70 mix-blend-soft-light"
+                    loading="lazy"
+                  />
+                </div>
               </div>
               {/* Decorative Element */}
               <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gold-gradient rounded-2xl -z-10 blur-xl opacity-70" />
