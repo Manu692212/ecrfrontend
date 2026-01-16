@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plane, GraduationCap, Users, Award } from 'lucide-react';
 import { ArrowRight } from 'lucide-react';
-const heroImage = '/ecr-campus-aerial.webp';
 import { settingsAPI } from '@/lib/api';
 
 interface HeroData {
@@ -161,15 +160,7 @@ const HeroSection = () => {
           </div>
 
           <div className="relative">
-            <div className="aspect-[4/3] rounded-[32px] overflow-hidden bg-slate-900/80 shadow-2xl">
-              <img
-                src={heroImage}
-                alt="Students in aviation training"
-                className="h-full w-full object-cover opacity-95"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/40 via-transparent to-white/10" />
-            </div>
+            <div className="aspect-[4/3] rounded-[32px] overflow-hidden bg-gradient-to-tr from-slate-900/80 via-slate-800/60 to-slate-900/20 shadow-2xl" />
             <div className="absolute -bottom-6 -left-6 max-w-xs rounded-3xl border border-border bg-background p-6 shadow-xl">
               <p className="text-sm text-muted-foreground">Why students choose ECR</p>
               <p className="font-display text-3xl font-bold text-foreground">100% Placement</p>

@@ -41,7 +41,7 @@ const defaultAboutContent: AboutContent = {
   },
 };
 
-const CAMPUS_AERIAL_IMAGE = '/ecr-campus-aerial.webp';
+const CAMPUS_OVERLAY_IMAGE = '/campus.webp';
 
 const AboutSection = () => {
   const [aboutContent, setAboutContent] = useState<AboutContent>(defaultAboutContent);
@@ -83,19 +83,11 @@ const AboutSection = () => {
             <div className="relative rounded-2xl overflow-hidden shadow-[0_30px_80px_-50px_rgba(15,23,42,0.9)]">
               <div className="aspect-[4/3]">
                 <img
-                  src={CAMPUS_AERIAL_IMAGE}
-                  alt="Aerial view of the ECR Group of Institutions campus"
+                  src={CAMPUS_OVERLAY_IMAGE}
+                  alt="ECR campus"
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
-                <div className="absolute inset-0">
-                  <img
-                    src="/campus.webp"
-                    alt="ECR campus overlay"
-                    className="h-full w-full object-cover opacity-70 mix-blend-soft-light"
-                    loading="lazy"
-                  />
-                </div>
               </div>
               {/* Decorative Element */}
               <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gold-gradient rounded-2xl -z-10 blur-xl opacity-70" />
